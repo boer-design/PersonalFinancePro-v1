@@ -1,0 +1,3 @@
+date,symbol,side,quantity,price,fee,assetName
+2024-01-01,AAPL,BUY,5,150,1,Apple Inc.
+2024-02-01,AAPL,SELL,2,160,1,Apple Inc.

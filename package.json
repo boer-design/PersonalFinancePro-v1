@@ -1,0 +1,11 @@
+{
+  "name": "personalfinancepro",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal finance management toolkit.",
+  "license": "MIT",
+  "scripts": {
+    "test": "echo \"No tests specified\" && exit 0"
+  }
+}
+
