@@ -28,6 +28,7 @@ export default function AppShell({ children }: Props) {
 
   const isDashboard = pathname === '/' || pathname === '/dashboard';
   const isTrades = pathname.startsWith('/trades');
+  const isPortfolio = pathname.startsWith('/portfolio');
 
   return (
     <div className="app-shell">
@@ -48,6 +49,18 @@ export default function AppShell({ children }: Props) {
                   }
                 >
                   Dashboard
+                </Link>
+              </NavigationMenu.Link>
+            </NavigationMenu.Item>
+            <NavigationMenu.Item>
+              <NavigationMenu.Link asChild>
+                <Link
+                  href="/portfolio"
+                  className={
+                    'nav-menu-link' + (isPortfolio ? ' nav-menu-link--active' : '')
+                  }
+                >
+                  Portfolio
                 </Link>
               </NavigationMenu.Link>
             </NavigationMenu.Item>

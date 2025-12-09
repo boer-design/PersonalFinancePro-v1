@@ -496,6 +496,12 @@ export default function TradesPage() {
   const getAccountName = (accountId: string) =>
     accounts?.find((a) => a.id === accountId)?.name || accountId;
 
+  const getSymbol = (trade: Trade) =>
+    (trade as any).assetSymbol ??
+    (trade as any).asset?.symbol ??
+    trade.assetSymbol ??
+    '';
+
   // ---------- Render ----------
 
   return (
@@ -618,7 +624,9 @@ export default function TradesPage() {
                           <td className="px-3 py-2">
                             {t.accountName || getAccountName(t.accountId)}
                           </td>
-                          <td className="px-3 py-2">{t.assetSymbol}</td>
+                          <td className="px-3 py-2">
+                            {getSymbol(t) || '—'}
+                          </td>
                           <td className="px-3 py-2">{t.side}</td>
                           <td className="px-3 py-2 text-right">
                             {t.quantity.toLocaleString()}
