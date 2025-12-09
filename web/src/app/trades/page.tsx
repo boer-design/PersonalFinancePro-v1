@@ -193,6 +193,12 @@ function Modal({
   onClose,
   children,
 }: ModalProps) {
+  // Debug helper: log open state to confirm toggle
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log('[Import Modal] open:', open);
+  }, [open]);
+
   return (
     <Dialog.Root
       open={open}
@@ -201,8 +207,14 @@ function Modal({
       }}
     >
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" />
-        <Dialog.Content className="fixed z-50 left-1/2 top-1/2 w-full max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-xl border border-slate-700 bg-slate-900 shadow-2xl focus:outline-none">
+        <Dialog.Overlay
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+          style={{ background: 'rgba(0,0,0,0.6)' }}
+        />
+        <Dialog.Content
+          className="fixed z-50 left-1/2 top-1/2 w-full max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-xl border border-slate-700 bg-slate-900 shadow-2xl focus:outline-none"
+          style={{ backgroundColor: '#0f172a', borderColor: '#334155' }}
+        >
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
             <Dialog.Title className="text-lg font-semibold">
               {title}
