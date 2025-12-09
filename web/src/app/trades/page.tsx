@@ -176,7 +176,7 @@ function RadixSelect({
   );
 }
 
-// ---- Simple custom modal overlay ----
+// ---- Radix Dialog (direct) ----
 
 type ModalProps = {
   open: boolean;
@@ -502,6 +502,18 @@ export default function TradesPage() {
     trade.assetSymbol ??
     '';
 
+  useEffect(() => {
+    if (!accounts || accounts.length === 0) {
+      if (selectedAccountIdForImport !== '') {
+        setSelectedAccountIdForImport('');
+      }
+      return;
+    }
+    if (!selectedAccountIdForImport) {
+      setSelectedAccountIdForImport(accounts[0].id);
+    }
+  }, [accounts, selectedAccountIdForImport]);
+
   // ---------- Render ----------
 
   return (
@@ -702,20 +714,26 @@ export default function TradesPage() {
             <label className="block text-sm font-medium mb-1">
               Import into account
             </label>
-            <RadixSelect
-              ariaLabel="Import into account"
-              value={selectedAccountIdForImport}
-              onValueChange={setSelectedAccountIdForImport}
-              disabled={accountsLoading || accountsError}
-              placeholder="Select an account..."
-              className="w-full"
-              options={(accounts ?? []).map((acc) => ({
-                value: acc.id,
-                label: `${acc.name} (${acc.currency}${
-                  acc.type ? ` • ${acc.type}` : ''
-                })`,
-              }))}
-            />
+            {(accounts?.length ?? 0) === 0 ? (
+              <div className="text-xs text-slate-400">
+                No accounts yet. Create one to import trades.
+              </div>
+            ) : (
+              <RadixSelect
+                ariaLabel="Import into account"
+                value={selectedAccountIdForImport}
+                onValueChange={setSelectedAccountIdForImport}
+                disabled={accountsLoading || accountsError}
+                placeholder="Select an account..."
+                className="w-full"
+                options={(accounts ?? []).map((acc) => ({
+                  value: acc.id,
+                  label: `${acc.name} (${acc.currency}${
+                    acc.type ? ` • ${acc.type}` : ''
+                  })`,
+                }))}
+              />
+            )}
             {accountsError && (
               <p className="text-xs text-red-500 mt-1">
                 Failed to load accounts.
