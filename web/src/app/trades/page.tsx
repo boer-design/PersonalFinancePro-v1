@@ -199,6 +199,29 @@ function Modal({
     console.log('[Import Modal] open:', open);
   }, [open]);
 
+  const overlayStyle: React.CSSProperties = {
+    position: 'fixed',
+    inset: 0,
+    zIndex: 2000,
+    background: 'rgba(0,0,0,0.6)',
+    backdropFilter: 'blur(6px)',
+  };
+
+  const contentStyle: React.CSSProperties = {
+    position: 'fixed',
+    zIndex: 2001,
+    left: '50%',
+    top: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 'min(640px, calc(100vw - 32px))',
+    maxHeight: '80vh',
+    overflowY: 'auto',
+    border: '1px solid #334155',
+    borderRadius: 16,
+    backgroundColor: '#0f172a',
+    boxShadow: '0 20px 60px rgba(0,0,0,0.45)',
+  };
+
   return (
     <Dialog.Root
       open={open}
@@ -207,14 +230,8 @@ function Modal({
       }}
     >
       <Dialog.Portal>
-        <Dialog.Overlay
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
-          style={{ background: 'rgba(0,0,0,0.6)' }}
-        />
-        <Dialog.Content
-          className="fixed z-50 left-1/2 top-1/2 w-full max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-xl border border-slate-700 bg-slate-900 shadow-2xl focus:outline-none"
-          style={{ backgroundColor: '#0f172a', borderColor: '#334155' }}
-        >
+        <Dialog.Overlay style={overlayStyle} />
+        <Dialog.Content style={contentStyle}>
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
             <Dialog.Title className="text-lg font-semibold">
               {title}
