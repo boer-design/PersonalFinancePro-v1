@@ -3,6 +3,8 @@
 import { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import * as NavigationMenu from '@radix-ui/react-navigation-menu';
+import * as Avatar from '@radix-ui/react-avatar';
 import { useAuth } from '../lib/auth';
 
 type Props = {
@@ -35,29 +37,46 @@ export default function AppShell({ children }: Props) {
           <span className="app-shell__brand-sub">PersonalFinancePro</span>
         </div>
 
-        <nav className="app-shell__nav">
-          <Link
-            href="/"
-            className={
-              'app-shell__nav-link' +
-              (isDashboard ? ' app-shell__nav-link--active' : '')
-            }
-          >
-            Dashboard
-          </Link>
-          <Link
-            href="/trades"
-            className={
-              'app-shell__nav-link' +
-              (isTrades ? ' app-shell__nav-link--active' : '')
-            }
-          >
-            Trades
-          </Link>
-        </nav>
+        <NavigationMenu.Root className="nav-menu-root">
+          <NavigationMenu.List className="nav-menu-list">
+            <NavigationMenu.Item>
+              <NavigationMenu.Link asChild>
+                <Link
+                  href="/"
+                  className={
+                    'nav-menu-link' + (isDashboard ? ' nav-menu-link--active' : '')
+                  }
+                >
+                  Dashboard
+                </Link>
+              </NavigationMenu.Link>
+            </NavigationMenu.Item>
+            <NavigationMenu.Item>
+              <NavigationMenu.Link asChild>
+                <Link
+                  href="/trades"
+                  className={
+                    'nav-menu-link' + (isTrades ? ' nav-menu-link--active' : '')
+                  }
+                >
+                  Trades
+                </Link>
+              </NavigationMenu.Link>
+            </NavigationMenu.Item>
+          </NavigationMenu.List>
+        </NavigationMenu.Root>
 
         <div className="app-shell__user">
-          {user && <span>{user.email}</span>}
+          {user && (
+            <div className="user-chip">
+              <Avatar.Root className="user-avatar">
+                <Avatar.Fallback className="user-avatar-fallback">
+                  {user.email?.[0]?.toUpperCase() ?? 'U'}
+                </Avatar.Fallback>
+              </Avatar.Root>
+              <span className="user-email">{user.email}</span>
+            </div>
+          )}
           <button
             type="button"
             className="app-shell__logout-btn"

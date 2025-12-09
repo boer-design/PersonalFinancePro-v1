@@ -1,26 +1,27 @@
 'use client';
 
 import React, {
+  useState,
+  useMemo,
   ChangeEvent,
   FormEvent,
   useEffect,
-  useMemo,
-  useState,
+  useRef,
 } from 'react';
-import { useRouter } from 'next/navigation';
+import * as Dialog from '@radix-ui/react-dialog';
+import * as Select from '@radix-ui/react-select';
 import {
-  useMutation,
   useQuery,
   useQueryClient,
+  useMutation,
 } from '@tanstack/react-query';
 import Papa from 'papaparse';
-import * as Dialog from '@radix-ui/react-dialog';
 
 import AppShell from '../components/AppShell';
-import { useAuth } from '../lib/auth';
 import { useApi } from '../lib/api';
+import { useAuth } from '../lib/auth';
 
-// ---------- Types ----------
+// ---- Types ----
 
 export type TradeSide = 'BUY' | 'SELL';
 
@@ -56,7 +57,7 @@ type Account = {
 };
 
 type ImportTradeRow = {
-  date: string;
+  date: string; // ISO string
   symbol: string;
   side: TradeSide;
   quantity: number;
@@ -75,7 +76,7 @@ type ToastState = {
   type: 'success' | 'error';
 };
 
-// ---------- Small Toast helper ----------
+// ---- Toast component ----
 
 function Toast({
   toast,
@@ -111,37 +112,153 @@ function Toast({
   );
 }
 
-// ---------- Page ----------
+// ---- Radix Select wrapper ----
+
+type Option = { label: string; value: string };
+
+function RadixSelect({
+  value,
+  onValueChange,
+  options,
+  placeholder,
+  ariaLabel,
+  disabled,
+  className,
+}: {
+  value: string;
+  onValueChange: (v: string) => void;
+  options: Option[];
+  placeholder?: string;
+  ariaLabel: string;
+  disabled?: boolean;
+  className?: string;
+}) {
+  // Radix Select disallows empty-string item values; use undefined for "no selection"
+  const normalizedValue = value === '' ? undefined : value;
+  return (
+    <Select.Root
+      value={normalizedValue}
+      onValueChange={(v) => onValueChange(v ?? '')}
+      disabled={disabled}
+    >
+      <Select.Trigger
+        aria-label={ariaLabel}
+        className={`radix-select-trigger ${className ?? ''}`}
+      >
+        <Select.Value placeholder={placeholder} />
+        <Select.Icon className="radix-select-icon">▾</Select.Icon>
+      </Select.Trigger>
+      <Select.Portal>
+        <Select.Content className="radix-select-content" position="popper">
+          <Select.ScrollUpButton className="radix-select-scroll">
+            ▲
+          </Select.ScrollUpButton>
+          <Select.Viewport className="radix-select-viewport">
+            {options.map((opt) => (
+              <Select.Item
+                key={opt.value}
+                value={opt.value}
+                className="radix-select-item"
+              >
+                <Select.ItemText>{opt.label}</Select.ItemText>
+                <Select.ItemIndicator className="radix-select-indicator">
+                  •
+                </Select.ItemIndicator>
+              </Select.Item>
+            ))}
+          </Select.Viewport>
+          <Select.ScrollDownButton className="radix-select-scroll">
+            ▼
+          </Select.ScrollDownButton>
+        </Select.Content>
+      </Select.Portal>
+    </Select.Root>
+  );
+}
+
+// ---- Simple custom modal overlay ----
+
+type ModalProps = {
+  open: boolean;
+  title: string;
+  description?: string;
+  onClose: () => void;
+  children: React.ReactNode;
+};
+
+function Modal({
+  open,
+  title,
+  description = 'Dialog',
+  onClose,
+  children,
+}: ModalProps) {
+  return (
+    <Dialog.Root
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose();
+      }}
+    >
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" />
+        <Dialog.Content className="fixed z-50 left-1/2 top-1/2 w-full max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-xl border border-slate-700 bg-slate-900 shadow-2xl focus:outline-none">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
+            <Dialog.Title className="text-lg font-semibold">
+              {title}
+            </Dialog.Title>
+            <Dialog.Description className="sr-only">
+              {description}
+            </Dialog.Description>
+            <Dialog.Close asChild>
+              <button
+                type="button"
+                className="text-sm px-2 py-1 rounded hover:bg-slate-800"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </Dialog.Close>
+          </div>
+          <div className="px-4 py-4 space-y-4">{children}</div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+
+// ---- Page ----
 
 export default function TradesPage() {
-  const router = useRouter();
   const { user, token, loading: authLoading } = useAuth();
   const api = useApi();
   const queryClient = useQueryClient();
 
-  // Pagination + filters
+  // pagination + filter
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
   const [accountFilter, setAccountFilter] = useState<string>(''); // '' = all
 
-  // Import modal state
-  const [isImportOpen, setIsImportOpen] = useState(false);
+  // modal state
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [
     selectedAccountIdForImport,
     setSelectedAccountIdForImport,
   ] = useState<string>('');
+
   const [newAccountName, setNewAccountName] = useState('');
   const [newAccountType, setNewAccountType] = useState('BROKERAGE');
   const [newAccountCurrency, setNewAccountCurrency] =
     useState('EUR');
-
   const [accountFormError, setAccountFormError] =
     useState<string | null>(null);
-  const [csvError, setCsvError] = useState<string | null>(null);
+
+  // CSV + toast state
   const [parsedRows, setParsedRows] =
     useState<ImportTradeRow[] | null>(null);
-
-  // Toast
+  const [csvError, setCsvError] = useState<string | null>(null);
+  const [csvFileName, setCsvFileName] = useState('');
   const [toast, setToast] = useState<ToastState | null>(null);
 
   const showToast = (message: string, type: 'success' | 'error') => {
@@ -155,21 +272,20 @@ export default function TradesPage() {
     }, 4000);
   };
 
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
-      router.replace('/login');
+      // layout/login handles redirect; keep hooks stable
     }
-  }, [authLoading, user, router]);
+  }, [authLoading, user]);
 
-  // --- Accounts query (inline, no extra hook) ---
+  // --- Accounts query ---
   const {
     data: accounts,
     isLoading: accountsLoading,
     isError: accountsError,
   } = useQuery({
     queryKey: ['accounts'],
-    enabled: !authLoading && !!token,
+    enabled: !!token,
     queryFn: () => api.get<Account[]>('/accounts'),
   });
 
@@ -181,16 +297,14 @@ export default function TradesPage() {
     error: tradesErrorObj,
   } = useQuery({
     queryKey: ['trades', { page, pageSize, accountId: accountFilter }],
-    enabled: !authLoading && !!token,
+    enabled: !!token,
     queryFn: () => {
-      const params = new URLSearchParams();
-      params.set('page', String(page));
-      params.set('pageSize', String(pageSize));
+      const params = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pageSize),
+      });
       if (accountFilter) params.set('accountId', accountFilter);
-
-      return api.get<TradesResponse>(
-        `/trades?${params.toString()}`,
-      );
+      return api.get<TradesResponse>(`/trades?${params.toString()}`);
     },
   });
 
@@ -211,7 +325,6 @@ export default function TradesPage() {
 
   // --- Mutations ---
 
-  // Create account (from modal)
   const createAccountMutation = useMutation<
     Account,
     unknown,
@@ -228,14 +341,12 @@ export default function TradesPage() {
     },
     onError: (error: any) => {
       setAccountFormError(
-        error?.message ??
-          'Failed to create account. Please try again.',
+        error?.message ?? 'Failed to create account. Please try again.',
       );
       showToast('Failed to create account.', 'error');
     },
   });
 
-  // Import trades (from modal)
   const importTradesMutation = useMutation<
     unknown,
     unknown,
@@ -264,7 +375,11 @@ export default function TradesPage() {
       queryClient.invalidateQueries({ queryKey: ['trades'] });
       setCsvError(null);
       setParsedRows(null);
-      setIsImportOpen(false);
+      setCsvFileName('');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      setIsImportModalOpen(false);
       showToast(
         `Imported ${rows.length} trade${
           rows.length === 1 ? '' : 's'
@@ -286,9 +401,12 @@ export default function TradesPage() {
 
     if (!selectedAccountIdForImport) {
       setCsvError('Please select an account before importing trades.');
+      setCsvFileName('');
+      e.target.value = '';
       return;
     }
 
+    setCsvFileName(file.name);
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
@@ -322,6 +440,7 @@ export default function TradesPage() {
         if (rows.length === 0) {
           setCsvError('No valid rows found in CSV.');
           setParsedRows(null);
+          setCsvFileName('');
           return;
         }
 
@@ -332,8 +451,19 @@ export default function TradesPage() {
         console.error(error);
         setCsvError('Failed to parse CSV file.');
         setParsedRows(null);
+        setCsvFileName('');
       },
     });
+  };
+
+  const handleUploadClick = () => {
+    if (!selectedAccountIdForImport) {
+      setCsvError('Please select an account before importing trades.');
+      return;
+    }
+
+    setCsvError(null);
+    fileInputRef.current?.click();
   };
 
   const handleCreateAccountSubmit = (e: FormEvent) => {
@@ -366,72 +496,69 @@ export default function TradesPage() {
   const getAccountName = (accountId: string) =>
     accounts?.find((a) => a.id === accountId)?.name || accountId;
 
-  // Ensure hooks have all run before deciding not to render
-  if (authLoading || !user) {
-    return null;
-  }
-
   // ---------- Render ----------
 
   return (
     <AppShell>
-      <div className="app-shell__main space-y-6">
-        {/* Header */}
-        <section className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-semibold">Trades</h1>
-            <p className="text-muted mt-1">
-              Manage and review your executed trades across accounts.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              setIsImportOpen(true);
-              setCsvError(null);
-              setParsedRows(null);
-            }}
-            className="px-4 py-2 rounded-lg border border-slate-600 bg-slate-800 hover:bg-slate-700 text-sm font-medium"
-          >
-            Import trades (CSV)
-          </button>
+      <div className="py-6 space-y-6">
+        {/* Heading */}
+        <section>
+          <h1 className="text-3xl font-semibold">Trades</h1>
+          <p className="text-sm text-slate-400 mt-1 max-w-xl">
+            Manage and review your executed trades across accounts.
+          </p>
         </section>
 
-        {/* Filters */}
+        {/* Trades table */}
         <section className="space-y-3">
-          <div className="flex flex-wrap items-end gap-4">
+          <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-xs font-medium text-slate-400 mb-1">
                 Account filter
               </label>
-              <select
-                className="border border-slate-700 bg-slate-900 rounded px-3 py-2 text-sm min-w-[220px]"
-                value={accountFilter}
-                onChange={(e) => {
-                  setAccountFilter(e.target.value);
+              <RadixSelect
+                ariaLabel="Account filter"
+                value={accountFilter || 'ALL_ACCOUNTS'}
+                onValueChange={(v) => {
+                  setAccountFilter(v === 'ALL_ACCOUNTS' ? '' : v);
                   setPage(1);
                 }}
                 disabled={accountsLoading || accountsError}
-              >
-                <option value="">All accounts</option>
-                {accounts?.map((acc) => (
-                  <option key={acc.id} value={acc.id}>
-                    {acc.name} ({acc.currency}
-                    {acc.type ? ` • ${acc.type}` : ''})
-                  </option>
-                ))}
-              </select>
+                placeholder="All accounts"
+                options={[
+                  { value: 'ALL_ACCOUNTS', label: 'All accounts' },
+                  ...(accounts ?? []).map((acc) => ({
+                    value: acc.id,
+                    label: `${acc.name} (${acc.currency}${
+                      acc.type ? ` • ${acc.type}` : ''
+                    })`,
+                  })),
+                ]}
+              />
               {accountsError && (
                 <p className="text-xs text-red-500 mt-1">
                   Failed to load accounts.
                 </p>
               )}
             </div>
-          </div>
-        </section>
 
-        {/* Trades table */}
-        <section className="space-y-3">
+            <button
+              type="button"
+              onClick={() => {
+                setIsImportModalOpen(true);
+                setCsvError(null);
+                setParsedRows(null);
+                setCsvFileName('');
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = '';
+                }
+              }}
+              className="px-4 py-2 rounded-lg border border-slate-600 bg-indigo-600/10 text-indigo-200 hover:bg-indigo-600/20 text-sm font-medium"
+            >
+              Import CSV
+            </button>
+          </div>
+
           <div className="border border-slate-700 rounded-xl overflow-hidden">
             {tradesLoading ? (
               <div className="p-4">Loading trades...</div>
@@ -451,14 +578,30 @@ export default function TradesPage() {
                 <table className="min-w-full text-sm">
                   <thead className="bg-slate-900/80 border-b border-slate-700">
                     <tr>
-                      <th>Date</th>
-                      <th>Account</th>
-                      <th>Symbol</th>
-                      <th>Side</th>
-                      <th style={{ textAlign: 'right' }}>Quantity</th>
-                      <th style={{ textAlign: 'right' }}>Price</th>
-                      <th style={{ textAlign: 'right' }}>Fee</th>
-                      <th style={{ textAlign: 'right' }}>Total</th>
+                      <th className="px-3 py-2 text-left font-medium">
+                        Date
+                      </th>
+                      <th className="px-3 py-2 text-left font-medium">
+                        Account
+                      </th>
+                      <th className="px-3 py-2 text-left font-medium">
+                        Symbol
+                      </th>
+                      <th className="px-3 py-2 text-left font-medium">
+                        Side
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium">
+                        Quantity
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium">
+                        Price
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium">
+                        Fee
+                      </th>
+                      <th className="px-3 py-2 text-right font-medium">
+                        Total
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -469,25 +612,24 @@ export default function TradesPage() {
                           key={t.id}
                           className="border-t border-slate-700/60 hover:bg-slate-900/60"
                         >
-                          <td>
+                          <td className="px-3 py-2">
                             {new Date(t.date).toLocaleDateString()}
                           </td>
-                          <td>
-                            {t.accountName ||
-                              getAccountName(t.accountId)}
+                          <td className="px-3 py-2">
+                            {t.accountName || getAccountName(t.accountId)}
                           </td>
-                          <td>{t.assetSymbol}</td>
-                          <td>{t.side}</td>
-                          <td style={{ textAlign: 'right' }}>
+                          <td className="px-3 py-2">{t.assetSymbol}</td>
+                          <td className="px-3 py-2">{t.side}</td>
+                          <td className="px-3 py-2 text-right">
                             {t.quantity.toLocaleString()}
                           </td>
-                          <td style={{ textAlign: 'right' }}>
+                          <td className="px-3 py-2 text-right">
                             {t.price.toFixed(2)}
                           </td>
-                          <td style={{ textAlign: 'right' }}>
+                          <td className="px-3 py-2 text-right">
                             {t.fee.toFixed(2)}
                           </td>
-                          <td style={{ textAlign: 'right' }}>
+                          <td className="px-3 py-2 text-right">
                             {total.toFixed(2)}
                           </td>
                         </tr>
@@ -529,180 +671,181 @@ export default function TradesPage() {
       {/* Toast */}
       {toast && <Toast toast={toast} onClose={() => setToast(null)} />}
 
-      {/* Import CSV Modal using Radix Dialog */}
-      <Dialog.Root
-        open={isImportOpen}
-        onOpenChange={(open) => {
-          // Don’t allow closing while import is in-flight
-          if (importTradesMutation.isPending) return;
-          setIsImportOpen(open);
-          if (!open) {
+      {/* Import CSV Modal */}
+      <Modal
+        open={isImportModalOpen}
+        title="Import trades from CSV"
+        description="Choose an account, optionally create one, then upload a CSV of trades to import."
+        onClose={() => {
+          if (!importTradesMutation.isPending) {
+            setIsImportModalOpen(false);
             setCsvError(null);
             setParsedRows(null);
+            setCsvFileName('');
+            if (fileInputRef.current) {
+              fileInputRef.current.value = '';
+            }
           }
         }}
       >
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50" />
-          <Dialog.Content className="fixed z-50 top-1/2 left-1/2 max-w-xl w-[90vw] -translate-x-1/2 -translate-y-1/2 bg-slate-900 border border-slate-700 rounded-xl shadow-xl p-4 space-y-4">
-            <div className="flex items-center justify-between mb-1">
-              <Dialog.Title className="text-lg font-semibold">
-                Import trades from CSV
-              </Dialog.Title>
-              <Dialog.Close asChild>
-                <button
-                  type="button"
-                  className="text-sm px-2 py-1 rounded hover:bg-slate-800"
-                >
-                  ✕
-                </button>
-              </Dialog.Close>
-            </div>
+        <div className="space-y-4">
+          {/* Choose account */}
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Import into account
+            </label>
+            <RadixSelect
+              ariaLabel="Import into account"
+              value={selectedAccountIdForImport}
+              onValueChange={setSelectedAccountIdForImport}
+              disabled={accountsLoading || accountsError}
+              placeholder="Select an account..."
+              className="w-full"
+              options={(accounts ?? []).map((acc) => ({
+                value: acc.id,
+                label: `${acc.name} (${acc.currency}${
+                  acc.type ? ` • ${acc.type}` : ''
+                })`,
+              }))}
+            />
+            {accountsError && (
+              <p className="text-xs text-red-500 mt-1">
+                Failed to load accounts.
+              </p>
+            )}
+          </div>
 
-            {/* Choose account */}
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Import into account
-              </label>
-              <select
-                className="border border-slate-700 bg-slate-900 rounded px-3 py-2 text-sm w-full"
-                value={selectedAccountIdForImport}
-                onChange={(e) =>
-                  setSelectedAccountIdForImport(e.target.value)
-                }
-                disabled={accountsLoading || accountsError}
-              >
-                <option value="">Select an account...</option>
-                {accounts?.map((acc) => (
-                  <option key={acc.id} value={acc.id}>
-                    {acc.name} ({acc.currency}
-                    {acc.type ? ` • ${acc.type}` : ''})
-                  </option>
-                ))}
-              </select>
-              {accountsError && (
-                <p className="text-xs text-red-500 mt-1">
-                  Failed to load accounts.
-                </p>
-              )}
-            </div>
-
-            {/* Create new account inline */}
-            <div className="border border-slate-700 rounded-lg p-3 space-y-3 bg-slate-900/60">
-              <h3 className="text-sm font-semibold">
-                Or create a new account
-              </h3>
-              <form
-                className="space-y-3"
-                onSubmit={handleCreateAccountSubmit}
-              >
-                <div className="space-y-1">
+          {/* Create new account inline */}
+          <div className="border border-slate-700 rounded-lg p-3 space-y-3 bg-slate-900/60">
+            <h3 className="text-sm font-semibold">
+              Or create a new account
+            </h3>
+            <form
+              className="space-y-3"
+              onSubmit={handleCreateAccountSubmit}
+            >
+              <div className="space-y-1">
+                <label className="block text-xs font-medium">
+                  Account name
+                </label>
+                <input
+                  type="text"
+                  className="w-full border border-slate-700 bg-slate-950 rounded px-3 py-2 text-sm"
+                  value={newAccountName}
+                  onChange={(e) => setNewAccountName(e.target.value)}
+                  placeholder="e.g. Interactive Brokers"
+                />
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-1 space-y-1">
                   <label className="block text-xs font-medium">
-                    Account name
+                    Type
                   </label>
                   <input
                     type="text"
                     className="w-full border border-slate-700 bg-slate-950 rounded px-3 py-2 text-sm"
-                    value={newAccountName}
-                    onChange={(e) => setNewAccountName(e.target.value)}
-                    placeholder="e.g. Interactive Brokers"
+                    value={newAccountType}
+                    onChange={(e) =>
+                      setNewAccountType(e.target.value)
+                    }
+                    placeholder="BROKERAGE"
                   />
                 </div>
-                <div className="flex gap-3">
-                  <div className="flex-1 space-y-1">
-                    <label className="block text-xs font-medium">
-                      Type
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full border border-slate-700 bg-slate-950 rounded px-3 py-2 text-sm"
-                      value={newAccountType}
-                      onChange={(e) =>
-                        setNewAccountType(e.target.value)
-                      }
-                      placeholder="BROKERAGE"
-                    />
-                  </div>
-                  <div className="w-24 space-y-1">
-                    <label className="block text-xs font-medium">
-                      Currency
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full border border-slate-700 bg-slate-950 rounded px-3 py-2 text-sm"
-                      value={newAccountCurrency}
-                      onChange={(e) =>
-                        setNewAccountCurrency(e.target.value)
-                      }
-                      placeholder="EUR"
-                    />
-                  </div>
+                <div className="w-24 space-y-1">
+                  <label className="block text-xs font-medium">
+                    Currency
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full border border-slate-700 bg-slate-950 rounded px-3 py-2 text-sm"
+                    value={newAccountCurrency}
+                    onChange={(e) =>
+                      setNewAccountCurrency(e.target.value)
+                    }
+                    placeholder="EUR"
+                  />
                 </div>
-                {accountFormError && (
-                  <p className="text-xs text-red-500">
-                    {accountFormError}
-                  </p>
-                )}
-                <button
-                  type="submit"
-                  disabled={createAccountMutation.isPending}
-                  className="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-600 bg-slate-800 hover:bg-slate-700 text-xs font-medium disabled:opacity-50"
-                >
-                  {createAccountMutation.isPending
-                    ? 'Creating...'
-                    : 'Create account'}
-                </button>
-              </form>
-            </div>
-
-            {/* CSV upload */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium">
-                CSV file
-              </label>
-              <input
-                type="file"
-                accept=".csv,text/csv"
-                onChange={handleCsvChange}
-                className="text-sm"
-                disabled={importTradesMutation.isPending}
-              />
-              {parsedRows && (
-                <p className="text-xs text-slate-300">
-                  Parsed {parsedRows.length} trade
-                  {parsedRows.length === 1 ? '' : 's'} from file.
+              </div>
+              {accountFormError && (
+                <p className="text-xs text-red-500">
+                  {accountFormError}
                 </p>
               )}
-              <p className="text-xs text-slate-400">
-                The CSV should include at least date, symbol, side,
-                quantity, and price columns.
-              </p>
-              {csvError && (
-                <p className="text-xs text-red-500">{csvError}</p>
-              )}
-            </div>
+              <button
+                type="submit"
+                disabled={createAccountMutation.isPending}
+                className="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-600 bg-slate-800 hover:bg-slate-700 text-xs font-medium disabled:opacity-50"
+              >
+                {createAccountMutation.isPending
+                  ? 'Creating...'
+                  : 'Create account'}
+              </button>
+            </form>
+          </div>
 
-            <div className="flex justify-end pt-1">
+          {/* CSV upload + confirm import */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium">
+              CSV file
+            </label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,text/csv"
+              onChange={handleCsvChange}
+              className="hidden"
+              disabled={importTradesMutation.isPending}
+            />
+            <div className="flex flex-wrap items-center gap-3">
               <button
                 type="button"
-                onClick={handleConfirmImport}
-                disabled={
-                  importTradesMutation.isPending ||
-                  !parsedRows ||
-                  parsedRows.length === 0
-                }
-                className="px-4 py-2 rounded-lg border border-slate-600 bg-slate-800 hover:bg-slate-700 text-sm font-medium disabled:opacity-50"
+                onClick={handleUploadClick}
+                disabled={importTradesMutation.isPending}
+                className="px-3 py-2 rounded-lg border border-slate-600 bg-slate-800 hover:bg-slate-700 text-sm font-medium disabled:opacity-50"
               >
-                {importTradesMutation.isPending
-                  ? 'Importing...'
-                  : parsedRows
-                  ? `Import ${parsedRows.length} trades`
-                  : 'Import trades'}
+                {importTradesMutation.isPending ? 'Working...' : 'Upload CSV'}
               </button>
+              {csvFileName && (
+                <span className="text-xs text-slate-300">
+                  Selected: {csvFileName}
+                </span>
+              )}
+              {parsedRows && (
+                <span className="text-xs text-slate-300">
+                  Parsed {parsedRows.length} trade
+                  {parsedRows.length === 1 ? '' : 's'}.
+                </span>
+              )}
             </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+            <p className="text-xs text-slate-400">
+              The CSV should include at least date, symbol, side, quantity,
+              and price columns.
+            </p>
+            {csvError && (
+              <p className="text-xs text-red-500">{csvError}</p>
+            )}
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handleConfirmImport}
+              disabled={
+                importTradesMutation.isPending ||
+                !parsedRows ||
+                parsedRows.length === 0
+              }
+              className="px-4 py-2 rounded-lg border border-slate-600 bg-slate-800 hover:bg-slate-700 text-sm font-medium disabled:opacity-50"
+            >
+              {importTradesMutation.isPending
+                ? 'Importing...'
+                : parsedRows
+                ? `Import ${parsedRows.length} trades`
+                : 'Import trades'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </AppShell>
   );
 }

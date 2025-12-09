@@ -3,6 +3,8 @@
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import * as Separator from '@radix-ui/react-separator';
+import * as ScrollArea from '@radix-ui/react-scroll-area';
 import { useAuth } from './lib/auth';
 import { useApi } from './lib/api';
 import AppShell from './components/AppShell';
@@ -78,80 +80,127 @@ export default function DashboardPage() {
 
   return (
     <AppShell>
-      <main style={{ padding: '24px' }}>
-        <h1 style={{ fontSize: '28px', marginBottom: '16px' }}>Dashboard</h1>
+      <main className="px-8 py-6 space-y-6">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <h1 className="text-3xl font-semibold">Dashboard</h1>
+            <p className="text-sm text-slate-400">
+              Portfolio overview and account summaries.
+            </p>
+          </div>
+        </div>
 
-        {isLoading && <p>Loading...</p>}
+        {isLoading && <p className="text-sm text-slate-300">Loading...</p>}
 
         {isError && (
-          <p style={{ color: 'red' }}>
+          <p className="text-sm text-red-400">
             Error loading portfolio:{' '}
             {error instanceof Error ? error.message : String(error)}
           </p>
         )}
 
         {data && (
-          <>
-            <section style={{ marginBottom: '32px' }}>
-              <h2 style={{ fontSize: '18px', marginBottom: '8px' }}>
-                Total Market Value
-              </h2>
-              <p style={{ fontSize: '24px', fontWeight: 600 }}>
-                {formatCurrency(data.totals.totalMarketValue)}
-              </p>
-              <p>Realized P/L: {formatCurrency(data.totals.realizedPnl)}</p>
-              <p>
-                Unrealized P/L: {formatCurrency(data.totals.unrealizedPnl)}
-              </p>
+          <div className="grid gap-5 lg:grid-cols-3">
+            <section className="lg:col-span-1 border border-slate-700/80 rounded-xl p-5 bg-slate-900/60 shadow-lg">
+              <h2 className="text-lg font-semibold mb-3">Totals</h2>
+              <div className="space-y-2 text-sm">
+                <div className="text-slate-400">Total Market Value</div>
+                <div className="text-2xl font-semibold">
+                  {formatCurrency(data.totals.totalMarketValue)}
+                </div>
+                <Separator.Root className="h-px bg-slate-700 my-2" />
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Realized P/L</span>
+                  <span className="font-medium">
+                    {formatCurrency(data.totals.realizedPnl)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Unrealized P/L</span>
+                  <span className="font-medium">
+                    {formatCurrency(data.totals.unrealizedPnl)}
+                  </span>
+                </div>
+              </div>
             </section>
 
-            <section>
-              <h2 style={{ fontSize: '20px', marginBottom: '8px' }}>
-                Accounts
-              </h2>
-              {data.accounts.length === 0 ? (
-                <p>No accounts yet.</p>
-              ) : (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Currency</th>
-                      <th>Market value</th>
-                      <th>Realized P/L</th>
-                      <th>Unrealized P/L</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.accounts.map((acc) => (
-                      <tr key={acc.accountId}>
-                        <td>{acc.name}</td>
-                        <td>{acc.currency}</td>
-                        <td>
-                          {formatCurrency(
-                            acc.totals.totalMarketValue,
-                            acc.currency,
-                          )}
-                        </td>
-                        <td>
-                          {formatCurrency(
-                            acc.totals.realizedPnl,
-                            acc.currency,
-                          )}
-                        </td>
-                        <td>
-                          {formatCurrency(
-                            acc.totals.unrealizedPnl,
-                            acc.currency,
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+            <section className="lg:col-span-2 border border-slate-700/80 rounded-xl bg-slate-900/60 shadow-lg">
+              <div className="px-5 py-4 border-b border-slate-700/70 flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold">Accounts</h2>
+                  <p className="text-xs text-slate-400">
+                    Per-account market value and P/L
+                  </p>
+                </div>
+              </div>
+              <ScrollArea.Root className="max-h-[420px]">
+                <ScrollArea.Viewport className="p-5">
+                  {data.accounts.length === 0 ? (
+                    <p className="text-sm text-slate-300">No accounts yet.</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full text-sm">
+                        <thead className="bg-slate-900/80 border-b border-slate-700">
+                          <tr>
+                            <th className="px-3 py-2 text-left font-medium">
+                              Name
+                            </th>
+                            <th className="px-3 py-2 text-left font-medium">
+                              Currency
+                            </th>
+                            <th className="px-3 py-2 text-right font-medium">
+                              Market value
+                            </th>
+                            <th className="px-3 py-2 text-right font-medium">
+                              Realized P/L
+                            </th>
+                            <th className="px-3 py-2 text-right font-medium">
+                              Unrealized P/L
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {data.accounts.map((acc) => (
+                            <tr
+                              key={acc.accountId}
+                              className="border-t border-slate-700/60"
+                            >
+                              <td className="px-3 py-2">{acc.name}</td>
+                              <td className="px-3 py-2">{acc.currency}</td>
+                              <td className="px-3 py-2 text-right">
+                                {formatCurrency(
+                                  acc.totals.totalMarketValue,
+                                  acc.currency,
+                                )}
+                              </td>
+                              <td className="px-3 py-2 text-right">
+                                {formatCurrency(
+                                  acc.totals.realizedPnl,
+                                  acc.currency,
+                                )}
+                              </td>
+                              <td className="px-3 py-2 text-right">
+                                {formatCurrency(
+                                  acc.totals.unrealizedPnl,
+                                  acc.currency,
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </ScrollArea.Viewport>
+                <ScrollArea.Scrollbar
+                  orientation="vertical"
+                  className="ScrollAreaScrollbar"
+                >
+                  <ScrollArea.Thumb className="ScrollAreaThumb" />
+                </ScrollArea.Scrollbar>
+              </ScrollArea.Root>
             </section>
-          </>
+          </div>
         )}
       </main>
     </AppShell>
