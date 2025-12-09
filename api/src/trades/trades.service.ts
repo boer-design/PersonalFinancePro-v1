@@ -102,13 +102,15 @@ export class TradesService {
       // find or create asset by symbol
       const asset = await this.prisma.asset.upsert({
         where: { symbol },
-        update: { name },
+        update: {},
         create: {
           symbol,
-          name,
-          assetType: 'STOCK',
+          assetType: 'STOCK', // or whatever you use
+          // Use the CSV-provided name if it exists, otherwise fall back to symbol
+          name: (row as any).name ?? symbol,
         },
       });
+      
 
       const trade = await this.prisma.trade.create({
         data: {
