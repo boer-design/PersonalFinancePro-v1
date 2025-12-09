@@ -97,6 +97,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const Leading = leadingIconName ? iconMap[leadingIconName] : null;
     const Trailing = trailingIconName ? iconMap[trailingIconName] : null;
+    const iconProps = { width: 20, height: 20, 'aria-hidden': true, focusable: false };
 
     const classes = classNames(
       buttonBase,
@@ -110,7 +111,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <Comp className={classes} ref={ref} {...rest}>
         {Leading ? (
-          <Leading className="h-5 w-5" aria-hidden="true" />
+          <Leading {...iconProps} />
         ) : leftIcon ? (
           <span aria-hidden="true">{leftIcon}</span>
         ) : null}
@@ -120,7 +121,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           </span>
         )}
         {Trailing ? (
-          <Trailing className="h-5 w-5" aria-hidden="true" />
+          <Trailing {...iconProps} />
         ) : rightIcon ? (
           <span aria-hidden="true">{rightIcon}</span>
         ) : null}
