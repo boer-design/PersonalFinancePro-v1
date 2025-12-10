@@ -8,17 +8,25 @@ import React, {
   useEffect,
   useRef,
 } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   useQuery,
   useQueryClient,
   useMutation,
 } from '@tanstack/react-query';
 import Papa from 'papaparse';
+import {
+  ChartPieIcon,
+  DocumentTextIcon,
+  ShieldCheckIcon,
+  Squares2X2Icon,
+} from '@heroicons/react/24/outline';
 
 import AppShell from '../components/AppShell';
 import { useApi } from '../lib/api';
 import { useAuth } from '../lib/auth';
-import { Button, Dialog, InputField, Select, Table } from '../components/ui';
+import { Button, Dialog, InputField, Select, SideMenu, Table } from '../components/ui';
+import type { SideMenuSection } from '../components/ui/navigation/side-menu/SideMenu';
 
 // ---- Types ----
 
@@ -159,6 +167,7 @@ export default function TradesPage() {
   const { user, token, loading: authLoading } = useAuth();
   const api = useApi();
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   // pagination + filter
   const [page, setPage] = useState(1);
@@ -522,6 +531,51 @@ export default function TradesPage() {
       label: `${acc.name} (${acc.currency}${acc.type ? ` - ${acc.type}` : ''})`,
     })) || [];
 
+  const filteredAccount = useMemo(
+    () => accounts?.find((acc) => acc.id === accountFilter),
+    [accounts, accountFilter],
+  );
+
+  const navigationSections: SideMenuSection[] = useMemo(
+    () => [
+      {
+        id: 'portfolio',
+        label: 'Portfolio',
+        items: [
+          {
+            id: 'trades',
+            label: 'Trades',
+            description: 'Import & review fills',
+            icon: <DocumentTextIcon width={20} height={20} />,
+            active: true,
+            onClick: () => router.push('/trades'),
+          },
+          {
+            id: 'portfolio',
+            label: 'Portfolio overview',
+            description: 'Holdings by account',
+            icon: <ChartPieIcon width={20} height={20} />,
+            onClick: () => router.push('/portfolio'),
+          },
+        ],
+      },
+      {
+        id: 'workspace',
+        label: 'Workspace',
+        items: [
+          {
+            id: 'dashboard',
+            label: 'Dashboard',
+            description: 'Totals & performance',
+            icon: <Squares2X2Icon width={20} height={20} />,
+            onClick: () => router.push('/'),
+          },
+        ],
+      },
+    ],
+    [router],
+  );
+
   const handleAccountSelect = (value: string) => {
     if (value === CREATE_ACCOUNT_OPTION_VALUE) {
       openCreateAccountDialog();
@@ -534,159 +588,178 @@ export default function TradesPage() {
 
   return (
     <AppShell>
-      <div className="py-6 space-y-6">
-        {/* Heading */}
-        <section>
-          <h1 className="text-3xl font-semibold">Trades</h1>
-          <p className="text-sm text-slate-400 mt-1 max-w-xl">
-            Manage and review your executed trades across accounts.
-          </p>
-        </section>
-
-        {/* Trades table */}
-        <section className="space-y-3">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <Select
-                label="Account filter"
-                placeholder="All accounts"
-                value={accountFilter || 'ALL_ACCOUNTS'}
-                onValueChange={(v) => {
-                  setAccountFilter(v === 'ALL_ACCOUNTS' ? '' : v);
-                  setPage(1);
-                }}
-                disabled={accountsLoading || accountsError}
-                options={[
-                  { value: 'ALL_ACCOUNTS', label: 'All accounts' },
-                  ...(accounts ?? []).map((acc) => ({
-                    value: acc.id,
-                    label: `${acc.name} (${acc.currency}${acc.type ? ` - ${acc.type}` : ''})`,
-                  })),
-                ]}
-              />
-              {accountsError && (
-                <p className="text-xs text-red-500 mt-1">
-                  Failed to load accounts.
-                </p>
-              )}
-            </div>
-
-            <Button
-              appearance="secondary"
-              tone="purple"
-              onClick={openImportDialog}
-            >
-              Import CSV
-            </Button>
+      <main className="px-8 py-6 space-y-6">
+        <div className="grid gap-5 xl:grid-cols-[320px_1fr] lg:grid-cols-[300px_1fr]">
+          <div className="space-y-4">
+            <SideMenu
+              title="Navigation"
+              subtitle={
+                filteredAccount
+                  ? `${filteredAccount.name} (${filteredAccount.currency})`
+                  : 'All accounts'
+              }
+              sections={navigationSections}
+              footerSlot={
+                <>
+                  <ShieldCheckIcon width={18} height={18} aria-hidden="true" />
+                  <span>Secure sync enabled</span>
+                </>
+              }
+            />
           </div>
 
-          <div className="border border-slate-700 rounded-xl overflow-hidden">
-            {tradesLoading ? (
-              <div className="p-4">Loading trades...</div>
-            ) : tradesError ? (
-              <div className="p-4 text-red-500">
-                Error loading trades{' '}
-                {tradesErrorObj instanceof Error
-                  ? tradesErrorObj.message
-                  : String(tradesErrorObj)}
-              </div>
-            ) : trades.length === 0 ? (
-              <div className="p-4 text-sm text-slate-400">
-                No trades found. Try importing a CSV.
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <Table.Head>
-                    <Table.HeadRow>
-                      <Table.HeaderCell>
-                        <Table.ColumnTitle>Date</Table.ColumnTitle>
-                      </Table.HeaderCell>
-                      <Table.HeaderCell>
-                        <Table.ColumnTitle>Account</Table.ColumnTitle>
-                      </Table.HeaderCell>
-                      <Table.HeaderCell>
-                        <Table.ColumnTitle>Symbol</Table.ColumnTitle>
-                      </Table.HeaderCell>
-                      <Table.HeaderCell>
-                        <Table.ColumnTitle>Asset Type</Table.ColumnTitle>
-                      </Table.HeaderCell>
-                      <Table.HeaderCell>
-                        <Table.ColumnTitle>Currency</Table.ColumnTitle>
-                      </Table.HeaderCell>
-                      <Table.HeaderCell>
-                        <Table.ColumnTitle>Side</Table.ColumnTitle>
-                      </Table.HeaderCell>
-                      <Table.HeaderCell align="right">
-                        <Table.ColumnTitle align="right">Quantity</Table.ColumnTitle>
-                      </Table.HeaderCell>
-                      <Table.HeaderCell align="right">
-                        <Table.ColumnTitle align="right">Price</Table.ColumnTitle>
-                      </Table.HeaderCell>
-                      <Table.HeaderCell align="right">
-                        <Table.ColumnTitle align="right">Fee</Table.ColumnTitle>
-                      </Table.HeaderCell>
-                      <Table.HeaderCell align="right">
-                        <Table.ColumnTitle align="right">Total</Table.ColumnTitle>
-                      </Table.HeaderCell>
-                    </Table.HeadRow>
-                  </Table.Head>
-                  <Table.Body>
-                    {trades.map((t) => {
-                      const total = t.quantity * t.price + t.fee;
-                      return (
-                        <Table.Row key={t.id}>
-                          <Table.Cell>
-                            {new Date(t.date).toLocaleDateString()}
-                          </Table.Cell>
-                          <Table.Cell>{t.accountName || getAccountName(t.accountId)}</Table.Cell>
-                          <Table.Cell>{getSymbol(t) || '-'}</Table.Cell>
-                          <Table.Cell>{getAssetType(t)}</Table.Cell>
-                          <Table.Cell>{getAssetCurrency(t)}</Table.Cell>
-                          <Table.Cell>{t.side}</Table.Cell>
-                          <Table.Cell align="right">
-                            {t.quantity.toLocaleString()}
-                          </Table.Cell>
-                          <Table.Cell align="right">{t.price.toFixed(2)}</Table.Cell>
-                          <Table.Cell align="right">{t.fee.toFixed(2)}</Table.Cell>
-                          <Table.Cell align="right">{total.toFixed(2)}</Table.Cell>
-                        </Table.Row>
-                      );
-                    })}
-                  </Table.Body>
-                </Table>
-              </div>
-            )}
-          </div>
+          <div className="space-y-6">
+            <section>
+              <h1 className="text-3xl font-semibold">Trades</h1>
+              <p className="text-sm text-slate-400 mt-1 max-w-xl">
+                Manage and review your executed trades across accounts.
+              </p>
+            </section>
 
-          {/* Pagination */}
-          <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
-            <div>
-              Page {page} of {totalPages}
-            </div>
-            <div className="space-x-2">
-              <Button
-                appearance="secondary"
-                tone="neutral"
-                size="sm"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-              >
-                Previous
-              </Button>
-              <Button
-                appearance="secondary"
-                tone="neutral"
-                size="sm"
-                onClick={() => setPage((p) => p + 1)}
-                disabled={page >= totalPages}
-              >
-                Next
-              </Button>
-            </div>
+            <section className="space-y-3">
+              <div className="flex flex-wrap items-end justify-between gap-4">
+                <div className="w-full sm:w-auto">
+                  <Select
+                    label="Account filter"
+                    placeholder="All accounts"
+                    value={accountFilter || 'ALL_ACCOUNTS'}
+                    onValueChange={(v) => {
+                      setAccountFilter(v === 'ALL_ACCOUNTS' ? '' : v);
+                      setPage(1);
+                    }}
+                    disabled={accountsLoading || accountsError}
+                    options={[
+                      { value: 'ALL_ACCOUNTS', label: 'All accounts' },
+                      ...(accounts ?? []).map((acc) => ({
+                        value: acc.id,
+                        label: `${acc.name} (${acc.currency}${acc.type ? ` - ${acc.type}` : ''})`,
+                      })),
+                    ]}
+                  />
+                  {accountsError && (
+                    <p className="text-xs text-red-500 mt-1">
+                      Failed to load accounts.
+                    </p>
+                  )}
+                </div>
+
+                <Button
+                  appearance="secondary"
+                  tone="purple"
+                  onClick={openImportDialog}
+                >
+                  Import CSV
+                </Button>
+              </div>
+
+              <div className="border border-slate-700 rounded-xl overflow-hidden">
+                {tradesLoading ? (
+                  <div className="p-4">Loading trades...</div>
+                ) : tradesError ? (
+                  <div className="p-4 text-red-500">
+                    Error loading trades{' '}
+                    {tradesErrorObj instanceof Error
+                      ? tradesErrorObj.message
+                      : String(tradesErrorObj)}
+                  </div>
+                ) : trades.length === 0 ? (
+                  <div className="p-4 text-sm text-slate-400">
+                    No trades found. Try importing a CSV.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <Table.Head>
+                        <Table.HeadRow>
+                          <Table.HeaderCell>
+                            <Table.ColumnTitle>Date</Table.ColumnTitle>
+                          </Table.HeaderCell>
+                          <Table.HeaderCell>
+                            <Table.ColumnTitle>Account</Table.ColumnTitle>
+                          </Table.HeaderCell>
+                          <Table.HeaderCell>
+                            <Table.ColumnTitle>Symbol</Table.ColumnTitle>
+                          </Table.HeaderCell>
+                          <Table.HeaderCell>
+                            <Table.ColumnTitle>Asset Type</Table.ColumnTitle>
+                          </Table.HeaderCell>
+                          <Table.HeaderCell>
+                            <Table.ColumnTitle>Currency</Table.ColumnTitle>
+                          </Table.HeaderCell>
+                          <Table.HeaderCell>
+                            <Table.ColumnTitle>Side</Table.ColumnTitle>
+                          </Table.HeaderCell>
+                          <Table.HeaderCell align="right">
+                            <Table.ColumnTitle align="right">Quantity</Table.ColumnTitle>
+                          </Table.HeaderCell>
+                          <Table.HeaderCell align="right">
+                            <Table.ColumnTitle align="right">Price</Table.ColumnTitle>
+                          </Table.HeaderCell>
+                          <Table.HeaderCell align="right">
+                            <Table.ColumnTitle align="right">Fee</Table.ColumnTitle>
+                          </Table.HeaderCell>
+                          <Table.HeaderCell align="right">
+                            <Table.ColumnTitle align="right">Total</Table.ColumnTitle>
+                          </Table.HeaderCell>
+                        </Table.HeadRow>
+                      </Table.Head>
+                      <Table.Body>
+                        {trades.map((t) => {
+                          const total = t.quantity * t.price + t.fee;
+                          return (
+                            <Table.Row key={t.id}>
+                              <Table.Cell>
+                                {new Date(t.date).toLocaleDateString()}
+                              </Table.Cell>
+                              <Table.Cell>{t.accountName || getAccountName(t.accountId)}</Table.Cell>
+                              <Table.Cell>{getSymbol(t) || '-'}</Table.Cell>
+                              <Table.Cell>{getAssetType(t)}</Table.Cell>
+                              <Table.Cell>{getAssetCurrency(t)}</Table.Cell>
+                              <Table.Cell>{t.side}</Table.Cell>
+                              <Table.Cell align="right">
+                                {t.quantity.toLocaleString()}
+                              </Table.Cell>
+                              <Table.Cell align="right">{t.price.toFixed(2)}</Table.Cell>
+                              <Table.Cell align="right">{t.fee.toFixed(2)}</Table.Cell>
+                              <Table.Cell align="right">{total.toFixed(2)}</Table.Cell>
+                            </Table.Row>
+                          );
+                        })}
+                      </Table.Body>
+                    </Table>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
+                <div>
+                  Page {page} of {totalPages}
+                </div>
+                <div className="space-x-2">
+                  <Button
+                    appearance="secondary"
+                    tone="neutral"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    appearance="secondary"
+                    tone="neutral"
+                    size="sm"
+                    onClick={() => setPage((p) => p + 1)}
+                    disabled={page >= totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </section>
           </div>
-        </section>
-      </div>
+        </div>
+      </main>
 
       {/* Toast */}
       {toast && <Toast toast={toast} onClose={() => setToast(null)} />}
