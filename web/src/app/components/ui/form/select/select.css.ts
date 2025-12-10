@@ -1,32 +1,70 @@
 import { createVar, style, styleVariants } from "@vanilla-extract/css";
 import { tokens } from "../../theme/tokens";
+import { bodyStyles, headingStyles } from "../../theme/typography";
 
-const { colors, radius, spacing, controlHeights, motion, typography } = tokens;
+const { colors, palette, radius, spacing, controlHeights, motion, typography } = tokens;
 
-const bgVar = createVar();
-const borderVar = createVar();
-const textVar = createVar();
-const placeholderVar = createVar();
-const focusVar = createVar();
-const optionHoverVar = createVar();
-const triggerBorderVar = createVar();
-const triggerBgVar = createVar();
-const triggerTextVar = createVar();
-const iconVar = createVar();
+export const selectVars = {
+  root: {
+    gap: createVar(),
+    minWidth: createVar(),
+    labelColor: createVar(),
+  },
+  trigger: {
+    height: createVar(),
+    paddingX: createVar(),
+    paddingY: createVar(),
+    bg: createVar(),
+    text: createVar(),
+    border: createVar(),
+    hoverBg: createVar(),
+    hoverBorder: createVar(),
+    focusRing: createVar(),
+    placeholder: createVar(),
+    icon: createVar(),
+    openBg: createVar(),
+    openBorder: createVar(),
+  },
+  menu: {
+    bg: createVar(),
+    border: createVar(),
+    shadow: createVar(),
+    padding: createVar(),
+  },
+  option: {
+    bg: createVar(),
+    hoverBg: createVar(),
+    activeBg: createVar(),
+    selectedBg: createVar(),
+    selectedText: createVar(),
+    text: createVar(),
+    disabledOpacity: createVar(),
+    divider: createVar(),
+    indicator: createVar(),
+  },
+} as const;
 
 export const selectTone = styleVariants({
   purple: {
     vars: {
-      [bgVar]: colors.button.signal.purple.bg,
-      [borderVar]: colors.button.signal.purple.border,
-      [textVar]: colors.text.primary,
-      [placeholderVar]: colors.text.subtle,
-      [focusVar]: colors.border.focus,
-      [optionHoverVar]: colors.button.signal.purple.bgHover,
-      [triggerBorderVar]: colors.border.subtle,
-      [triggerBgVar]: colors.background.surface,
-      [triggerTextVar]: colors.text.primary,
-      [iconVar]: colors.text.subtle,
+      [selectVars.trigger.bg]: colors.background.surface,
+      [selectVars.trigger.text]: colors.text.primary,
+      [selectVars.trigger.border]: colors.border.subtle,
+      [selectVars.trigger.hoverBg]: colors.background.subtle,
+      [selectVars.trigger.hoverBorder]: colors.border.subtle,
+      [selectVars.trigger.focusRing]: colors.border.focus,
+      [selectVars.trigger.placeholder]: colors.text.subtle,
+      [selectVars.trigger.icon]: colors.text.subtle,
+      [selectVars.option.hoverBg]: colors.background.subtle,
+      [selectVars.option.activeBg]: colors.background.elevated,
+      [selectVars.option.selectedBg]: palette.purple1000,
+      [selectVars.option.selectedText]: palette.neutral0,
+      [selectVars.option.text]: colors.text.primary,
+      [selectVars.option.bg]: colors.background.surface,
+      [selectVars.option.divider]: colors.border.subtle,
+      [selectVars.option.indicator]: palette.neutral0,
+      [selectVars.menu.bg]: palette.purple900,
+      [selectVars.menu.border]: colors.border.subtle,
     },
   },
 });
@@ -35,13 +73,60 @@ export const selectRoot = style({
   position: "relative",
   display: "inline-flex",
   flexDirection: "column",
-  gap: spacing[1],
-  minWidth: 220,
+  gap: selectVars.root.gap,
+  minWidth: selectVars.root.minWidth,
+  vars: {
+    [selectVars.root.gap]: `${spacing[1]}px`,
+    [selectVars.root.minWidth]: "280px",
+    [selectVars.root.labelColor]: colors.text.primary,
+    [selectVars.trigger.height]: `${controlHeights.lg + spacing[2]}px`,
+    [selectVars.trigger.paddingX]: `${spacing[4]}px`,
+    [selectVars.trigger.paddingY]: `${spacing[3]}px`,
+    [selectVars.trigger.bg]: colors.background.surface,
+    [selectVars.trigger.text]: colors.text.primary,
+    [selectVars.trigger.border]: colors.border.subtle,
+    [selectVars.trigger.hoverBg]: colors.background.subtle,
+    [selectVars.trigger.hoverBorder]: colors.border.subtle,
+    [selectVars.trigger.focusRing]: colors.border.focus,
+    [selectVars.trigger.placeholder]: colors.text.subtle,
+    [selectVars.trigger.icon]: colors.text.subtle,
+    [selectVars.trigger.openBg]: colors.background.subtle,
+    [selectVars.trigger.openBorder]: colors.border.subtle,
+    [selectVars.menu.bg]: colors.background.surface,
+    [selectVars.menu.border]: colors.border.subtle,
+    [selectVars.menu.shadow]: "0 20px 50px rgba(0,0,0,0.4)",
+    [selectVars.menu.padding]: "0px",
+    [selectVars.option.bg]: colors.background.surface,
+    [selectVars.option.hoverBg]: colors.background.subtle,
+    [selectVars.option.activeBg]: colors.background.elevated,
+    [selectVars.option.selectedBg]: palette.purple1000,
+    [selectVars.option.selectedText]: palette.neutral0,
+    [selectVars.option.text]: colors.text.primary,
+    [selectVars.option.disabledOpacity]: "0.6",
+    [selectVars.option.divider]: colors.border.subtle,
+    [selectVars.option.indicator]: palette.neutral0,
+  },
 });
 
 export const selectLabel = style({
-  fontSize: typography.size.xs,
-  color: colors.text.muted,
+  fontSize: `${headingStyles.xxs.fontSize}px`,
+  lineHeight: `${headingStyles.xxs.lineHeight}px`,
+  fontWeight: headingStyles.xxs.fontWeight,
+  letterSpacing: `${headingStyles.xxs.letterSpacing}px`,
+  color: selectVars.root.labelColor,
+});
+
+export const selectLabelRow = style({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: spacing[2],
+});
+
+export const selectLabelMeta = style({
+  color: colors.text.subtle,
+  fontSize: `${bodyStyles.xxxs.fontSize}px`,
+  lineHeight: `${bodyStyles.xxxs.lineHeight}px`,
 });
 
 export const selectTrigger = style({
@@ -49,32 +134,38 @@ export const selectTrigger = style({
   alignItems: "center",
   justifyContent: "space-between",
   width: "100%",
-  height: `${controlHeights.md}px`,
-  paddingInline: `${spacing[3]}px`,
-  backgroundColor: triggerBgVar,
-  color: triggerTextVar,
-  borderRadius: radius.md,
-  border: `1px solid ${triggerBorderVar}`,
+  height: selectVars.trigger.height,
+  paddingInline: selectVars.trigger.paddingX,
+  paddingBlock: selectVars.trigger.paddingY,
+  backgroundColor: selectVars.trigger.bg,
+  color: selectVars.trigger.text,
+  borderRadius: radius.lg,
+  border: `2px solid ${selectVars.trigger.border}`,
   fontFamily: typography.fontFamily.ui,
-  fontSize: `${typography.size.sm}px`,
-  lineHeight: typography.lineHeight.snug,
+  fontSize: `${bodyStyles.xxs.fontSize}px`,
+  lineHeight: `${bodyStyles.xxs.lineHeight}px`,
   transition: `border-color ${motion.duration.fast} ${motion.easing.standard}, box-shadow ${motion.duration.fast} ${motion.easing.standard}, background-color ${motion.duration.fast} ${motion.easing.standard}`,
   selectors: {
     "&:hover": {
-      borderColor: borderVar,
-      backgroundColor: colors.background.subtle,
+      borderColor: selectVars.trigger.hoverBorder,
+      backgroundColor: selectVars.trigger.hoverBg,
     },
     "&:focus-visible": {
       outline: "none",
-      borderColor: focusVar,
-      boxShadow: `0 0 0 2px ${focusVar}`,
+      borderColor: selectVars.trigger.focusRing,
+      boxShadow: `0 0 0 2px ${selectVars.trigger.focusRing}`,
     },
-    "&[data-placeholder=true]": {
-      color: placeholderVar,
+    "&[data-state='open']": {
+      borderColor: selectVars.trigger.openBorder,
+      backgroundColor: selectVars.trigger.openBg,
+      boxShadow: `0 0 0 2px ${selectVars.trigger.focusRing}`,
     },
-    "&[data-disabled=true]": {
+    "&[data-placeholder]": {
+      color: selectVars.trigger.placeholder,
+    },
+    "&[data-disabled]": {
       cursor: "not-allowed",
-      opacity: 0.6,
+      opacity: selectVars.option.disabledOpacity,
     },
   },
 });
@@ -87,7 +178,7 @@ export const selectValue = style({
 
 export const selectIcon = style({
   marginLeft: spacing[2],
-  color: iconVar,
+  color: selectVars.trigger.icon,
   flexShrink: 0,
   display: "grid",
   placeItems: "center",
@@ -98,42 +189,78 @@ export const selectAppearance = styleVariants({
 });
 
 export const selectContent = style({
-  backgroundColor: colors.background.surface,
-  border: `1px solid ${colors.border.subtle}`,
-  borderRadius: radius.md,
-  boxShadow: `0 20px 50px rgba(0,0,0,0.4)`,
-  overflow: "hidden",
-  minWidth: 220,
+  backgroundColor: selectVars.menu.bg,
+  border: "none",
+  borderRadius: 0,
+  boxShadow: selectVars.menu.shadow,
+  overflow: "visible",
+  minWidth: "var(--radix-select-trigger-width, 280px)",
+  zIndex: 200,
+  selectors: {
+    "&[data-state='open']": {
+      backgroundColor: selectVars.menu.bg,
+      boxShadow: selectVars.menu.shadow,
+    },
+  },
 });
 
 export const selectViewport = style({
-  padding: spacing[1],
+  padding: selectVars.menu.padding,
+  backgroundColor: selectVars.option.bg,
+  border: `2px solid ${selectVars.menu.border}`,
+  borderRadius: radius.lg,
+  overflow: "hidden",
 });
 
 export const selectItem = style({
   display: "flex",
   alignItems: "center",
   gap: spacing[2],
-  padding: `${spacing[2]}px ${spacing[3]}px`,
-  borderRadius: radius.sm,
-  fontSize: `${typography.size.sm}px`,
-  color: colors.text.primary,
+  minHeight: `${controlHeights.lg}px`,
+  padding: `${spacing[2]}px ${spacing[4]}px`,
+  fontSize: `${bodyStyles.xxs.fontSize}px`,
+  color: selectVars.option.text,
+  backgroundColor: selectVars.option.bg,
+  borderBottom: `1px solid ${selectVars.option.divider}`,
   cursor: "pointer",
   transition: `background-color ${motion.duration.fast} ${motion.easing.standard}`,
   selectors: {
-    "&[data-highlighted]": {
-      backgroundColor: optionHoverVar,
+    "&:last-child": {
+      borderBottom: "none",
     },
     "&[data-disabled]": {
-      color: colors.text.disabled,
+      opacity: selectVars.option.disabledOpacity,
       cursor: "not-allowed",
+    },
+    "&:hover:not([data-disabled])": {
+      backgroundColor: selectVars.option.hoverBg,
+    },
+    "&[data-highlighted]": {
+      backgroundColor: selectVars.option.hoverBg,
+    },
+    "&:active:not([data-disabled])": {
+      backgroundColor: selectVars.option.activeBg,
+    },
+    "&[data-state='checked']": {
+      backgroundColor: selectVars.option.selectedBg,
+      color: selectVars.option.selectedText,
+      fontWeight: typography.weight.bold,
+    },
+    "&:focus": {
+      outline: "none",
+      backgroundColor: selectVars.option.hoverBg,
     },
   },
 });
 
 export const selectSeparator = style({
-  height: 1,
-  backgroundColor: colors.border.subtle,
-  margin: `${spacing[1]}px 0`,
+  height: spacing[1],
 });
 
+export const selectItemIndicator = style({
+  marginLeft: "auto",
+  color: selectVars.option.indicator,
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+});

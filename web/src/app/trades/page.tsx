@@ -1,4 +1,4 @@
-'use client';
+﻿"use client";
 
 import React, {
   useState,
@@ -8,7 +8,6 @@ import React, {
   useEffect,
   useRef,
 } from 'react';
-import * as Dialog from '@radix-ui/react-dialog';
 import {
   useQuery,
   useQueryClient,
@@ -19,18 +18,40 @@ import Papa from 'papaparse';
 import AppShell from '../components/AppShell';
 import { useApi } from '../lib/api';
 import { useAuth } from '../lib/auth';
-import { Button, Select, Table } from '../components/ui';
+import { Button, Dialog, InputField, Select, Table } from '../components/ui';
 
 // ---- Types ----
 
 export type TradeSide = 'BUY' | 'SELL';
 
+type AssetType = 'STOCK' | 'ETF' | 'CRYPTO' | 'OTHER';
+
+type TradeAsset = {
+  id?: string;
+  symbol?: string;
+  name?: string | null;
+  assetType?: AssetType;
+  currency?: string | null;
+};
+
+type TradeAccount = {
+  id?: string;
+  name?: string | null;
+  currency?: string | null;
+  type?: string | null;
+};
+
 type Trade = {
   id: string;
   accountId: string;
   accountName?: string | null;
-  assetSymbol: string;
+  assetId?: string;
+  assetSymbol?: string;
   assetName?: string | null;
+  assetType?: AssetType;
+  assetCurrency?: string | null;
+  asset?: TradeAsset;
+  account?: TradeAccount;
   date: string;
   side: TradeSide;
   quantity: number;
@@ -59,6 +80,9 @@ type Account = {
 type ImportTradeRow = {
   date: string; // ISO string
   symbol: string;
+  name?: string;
+  assetType?: AssetType;
+  currency?: string;
   side: TradeSide;
   quantity: number;
   price: number;
@@ -75,6 +99,8 @@ type ToastState = {
   message: string;
   type: 'success' | 'error';
 };
+
+const CREATE_ACCOUNT_OPTION_VALUE = 'CREATE_NEW_ACCOUNT';
 
 // ---- Toast component ----
 
@@ -96,7 +122,7 @@ function Toast({
       >
         <div className="flex items-start gap-3">
           <span className="mt-0.5">
-            {toast.type === 'success' ? '✅' : '⚠️'}
+            {toast.type === 'success' ? '?' : '??'}
           </span>
           <div>{toast.message}</div>
           <button
@@ -112,85 +138,20 @@ function Toast({
   );
 }
 
-// ---- Radix Dialog (direct) ----
+// ---- Helpers ----
 
-type ModalProps = {
-  open: boolean;
-  title: string;
-  description?: string;
-  onClose: () => void;
-  children: React.ReactNode;
+const normalizeAssetType = (raw?: string): AssetType => {
+  const value = String(raw ?? '').trim().toUpperCase();
+  if (value === 'ETF') return 'ETF';
+  if (value === 'CRYPTO' || value === 'CRYPTOCURRENCY') return 'CRYPTO';
+  if (value === 'OTHER') return 'OTHER';
+  return 'STOCK';
 };
 
-function Modal({
-  open,
-  title,
-  description = 'Dialog',
-  onClose,
-  children,
-}: ModalProps) {
-  // Debug helper: log open state to confirm toggle
-  useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.log('[Import Modal] open:', open);
-  }, [open]);
-
-  const overlayStyle: React.CSSProperties = {
-    position: 'fixed',
-    inset: 0,
-    zIndex: 2000,
-    background: 'rgba(0,0,0,0.6)',
-    backdropFilter: 'blur(6px)',
-  };
-
-  const contentStyle: React.CSSProperties = {
-    position: 'fixed',
-    zIndex: 2001,
-    left: '50%',
-    top: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: 'min(640px, calc(100vw - 32px))',
-    maxHeight: '80vh',
-    overflowY: 'auto',
-    border: '1px solid #334155',
-    borderRadius: 16,
-    backgroundColor: '#0f172a',
-    boxShadow: '0 20px 60px rgba(0,0,0,0.45)',
-  };
-
-  return (
-    <Dialog.Root
-      open={open}
-      onOpenChange={(nextOpen) => {
-        if (!nextOpen) onClose();
-      }}
-    >
-      <Dialog.Portal>
-        <Dialog.Overlay style={overlayStyle} />
-        <Dialog.Content style={contentStyle}>
-          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
-            <Dialog.Title className="text-lg font-semibold">
-              {title}
-            </Dialog.Title>
-            <Dialog.Description className="sr-only">
-              {description}
-            </Dialog.Description>
-            <Dialog.Close asChild>
-              <button
-                type="button"
-                className="text-sm px-2 py-1 rounded hover:bg-slate-800"
-                aria-label="Close"
-              >
-                ✕
-              </button>
-            </Dialog.Close>
-          </div>
-          <div className="px-4 py-4 space-y-4">{children}</div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
-  );
-}
+const normalizeCurrency = (raw?: string) => {
+  if (!raw) return undefined;
+  return String(raw).trim().toUpperCase();
+};
 
 // ---- Page ----
 
@@ -211,6 +172,10 @@ export default function TradesPage() {
     selectedAccountIdForImport,
     setSelectedAccountIdForImport,
   ] = useState<string>('');
+  const [
+    isCreateAccountDialogOpen,
+    setIsCreateAccountDialogOpen,
+  ] = useState(false);
 
   const [newAccountName, setNewAccountName] = useState('');
   const [newAccountType, setNewAccountType] = useState('BROKERAGE');
@@ -301,6 +266,9 @@ export default function TradesPage() {
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
       setSelectedAccountIdForImport(account.id);
       setNewAccountName('');
+      setNewAccountType('BROKERAGE');
+      setNewAccountCurrency('EUR');
+      setIsCreateAccountDialogOpen(false);
       setAccountFormError(null);
       showToast(`Account "${account.name}" created.`, 'success');
     },
@@ -324,15 +292,22 @@ export default function TradesPage() {
         );
       }
 
+      const targetAccount = accounts?.find(
+        (acc) => acc.id === selectedAccountIdForImport,
+      );
+
       return api.post('/trades/import', {
         accountId: selectedAccountIdForImport,
         trades: rows.map((row) => ({
           date: row.date,
           symbol: row.symbol,
+          name: row.name,
           side: row.side,
           quantity: row.quantity,
           price: row.price,
           fee: row.fee ?? 0,
+          assetType: row.assetType ?? 'STOCK',
+          currency: row.currency ?? targetAccount?.currency,
         })),
       });
     },
@@ -389,9 +364,15 @@ export default function TradesPage() {
             continue;
           }
 
+          const parsedAssetType = normalizeAssetType(
+            (raw as any).assetType ?? (raw as any).type,
+          );
+          const parsedCurrency = normalizeCurrency((raw as any).currency);
+
           rows.push({
             date: new Date(raw.date).toISOString(),
             symbol: String(raw.symbol).trim(),
+            name: raw.name ? String(raw.name).trim() : undefined,
             side:
               String(raw.side).toUpperCase() === 'SELL'
                 ? 'SELL'
@@ -399,6 +380,8 @@ export default function TradesPage() {
             quantity: Number(raw.quantity),
             price: Number(raw.price),
             fee: raw.fee ? Number(raw.fee) : 0,
+            assetType: parsedAssetType,
+            currency: parsedCurrency,
           });
         }
 
@@ -438,11 +421,24 @@ export default function TradesPage() {
       return;
     }
 
+    setAccountFormError(null);
     createAccountMutation.mutate({
       name: newAccountName.trim(),
       type: newAccountType.trim() || 'BROKERAGE',
       currency: newAccountCurrency.trim() || 'EUR',
     });
+  };
+
+  const openCreateAccountDialog = () => {
+    setAccountFormError(null);
+    setIsCreateAccountDialogOpen(true);
+  };
+
+  const closeCreateAccountDialog = () => {
+    if (!createAccountMutation.isPending) {
+      setIsCreateAccountDialogOpen(false);
+      setAccountFormError(null);
+    }
   };
 
   const handleConfirmImport = () => {
@@ -461,11 +457,52 @@ export default function TradesPage() {
   const getAccountName = (accountId: string) =>
     accounts?.find((a) => a.id === accountId)?.name || accountId;
 
+  const getAccountCurrency = (accountId: string) =>
+    accounts?.find((a) => a.id === accountId)?.currency;
+
   const getSymbol = (trade: Trade) =>
-    (trade as any).assetSymbol ??
+    trade.asset?.symbol ??
     (trade as any).asset?.symbol ??
     trade.assetSymbol ??
+    (trade as any).assetSymbol ??
     '';
+
+  const getAssetType = (trade: Trade): AssetType =>
+    ((trade.asset?.assetType ??
+      (trade as any).asset?.assetType ??
+      trade.assetType ??
+      (trade as any).assetType) ?? 'STOCK') as AssetType;
+
+  const getAssetCurrency = (trade: Trade) =>
+    trade.asset?.currency ??
+    (trade as any).asset?.currency ??
+    trade.assetCurrency ??
+    (trade as any).assetCurrency ??
+    (trade as any).currency ??
+    getAccountCurrency(trade.accountId) ??
+    '-';
+
+  const resetImportState = () => {
+    setCsvError(null);
+    setParsedRows(null);
+    setCsvFileName('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const openImportDialog = () => {
+    setIsImportModalOpen(true);
+    resetImportState();
+  };
+
+  const closeImportDialog = () => {
+    if (!importTradesMutation.isPending) {
+      setIsImportModalOpen(false);
+      setIsCreateAccountDialogOpen(false);
+      resetImportState();
+    }
+  };
 
   useEffect(() => {
     if (!accounts || accounts.length === 0) {
@@ -478,6 +515,20 @@ export default function TradesPage() {
       setSelectedAccountIdForImport(accounts[0].id);
     }
   }, [accounts, selectedAccountIdForImport]);
+
+  const accountOptions =
+    (accounts ?? []).map((acc) => ({
+      value: acc.id,
+      label: `${acc.name} (${acc.currency}${acc.type ? ` - ${acc.type}` : ''})`,
+    })) || [];
+
+  const handleAccountSelect = (value: string) => {
+    if (value === CREATE_ACCOUNT_OPTION_VALUE) {
+      openCreateAccountDialog();
+      return;
+    }
+    setSelectedAccountIdForImport(value);
+  };
 
   // ---------- Render ----------
 
@@ -509,7 +560,7 @@ export default function TradesPage() {
                   { value: 'ALL_ACCOUNTS', label: 'All accounts' },
                   ...(accounts ?? []).map((acc) => ({
                     value: acc.id,
-                    label: `${acc.name} (${acc.currency}${acc.type ? ` • ${acc.type}` : ''})`,
+                    label: `${acc.name} (${acc.currency}${acc.type ? ` - ${acc.type}` : ''})`,
                   })),
                 ]}
               />
@@ -523,15 +574,7 @@ export default function TradesPage() {
             <Button
               appearance="secondary"
               tone="purple"
-              onClick={() => {
-                setIsImportModalOpen(true);
-                setCsvError(null);
-                setParsedRows(null);
-                setCsvFileName('');
-                if (fileInputRef.current) {
-                  fileInputRef.current.value = '';
-                }
-              }}
+              onClick={openImportDialog}
             >
               Import CSV
             </Button>
@@ -542,7 +585,7 @@ export default function TradesPage() {
               <div className="p-4">Loading trades...</div>
             ) : tradesError ? (
               <div className="p-4 text-red-500">
-                Error loading trades:{' '}
+                Error loading trades{' '}
                 {tradesErrorObj instanceof Error
                   ? tradesErrorObj.message
                   : String(tradesErrorObj)}
@@ -564,6 +607,12 @@ export default function TradesPage() {
                       </Table.HeaderCell>
                       <Table.HeaderCell>
                         <Table.ColumnTitle>Symbol</Table.ColumnTitle>
+                      </Table.HeaderCell>
+                      <Table.HeaderCell>
+                        <Table.ColumnTitle>Asset Type</Table.ColumnTitle>
+                      </Table.HeaderCell>
+                      <Table.HeaderCell>
+                        <Table.ColumnTitle>Currency</Table.ColumnTitle>
                       </Table.HeaderCell>
                       <Table.HeaderCell>
                         <Table.ColumnTitle>Side</Table.ColumnTitle>
@@ -591,7 +640,9 @@ export default function TradesPage() {
                             {new Date(t.date).toLocaleDateString()}
                           </Table.Cell>
                           <Table.Cell>{t.accountName || getAccountName(t.accountId)}</Table.Cell>
-                          <Table.Cell>{getSymbol(t) || '—'}</Table.Cell>
+                          <Table.Cell>{getSymbol(t) || '-'}</Table.Cell>
+                          <Table.Cell>{getAssetType(t)}</Table.Cell>
+                          <Table.Cell>{getAssetCurrency(t)}</Table.Cell>
                           <Table.Cell>{t.side}</Table.Cell>
                           <Table.Cell align="right">
                             {t.quantity.toLocaleString()}
@@ -640,186 +691,190 @@ export default function TradesPage() {
       {/* Toast */}
       {toast && <Toast toast={toast} onClose={() => setToast(null)} />}
 
-      {/* Import CSV Modal */}
-      <Modal
+      {/* Import CSV Dialog */}
+      <Dialog
         open={isImportModalOpen}
-        title="Import trades from CSV"
-        description="Choose an account, optionally create one, then upload a CSV of trades to import."
-        onClose={() => {
-          if (!importTradesMutation.isPending) {
-            setIsImportModalOpen(false);
-            setCsvError(null);
-            setParsedRows(null);
-            setCsvFileName('');
-            if (fileInputRef.current) {
-              fileInputRef.current.value = '';
-            }
+        onOpenChange={(next) => {
+          if (!next) {
+            closeImportDialog();
+          } else {
+            setIsImportModalOpen(true);
           }
         }}
       >
-        <div className="space-y-4">
-          {/* Choose account */}
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Import into account
-            </label>
-            {(accounts?.length ?? 0) === 0 ? (
-              <div className="text-xs text-slate-400">
-                No accounts yet. Create one to import trades.
-              </div>
-            ) : (
+        <Dialog.Content
+          tone="purple"
+          className="bg-slate-950 border border-slate-800 text-slate-50 shadow-2xl"
+          title="Import trades from CSV"
+          description={null}
+        >
+          <Dialog.Body className="space-y-6">
+            <div className="space-y-2">
               <Select
-                placeholder="Select an account..."
+                label="Select account"
+                placeholder="Select an account"
                 value={selectedAccountIdForImport}
-                onValueChange={setSelectedAccountIdForImport}
-                disabled={accountsLoading || accountsError}
-                options={(accounts ?? []).map((acc) => ({
-                  value: acc.id,
-                  label: `${acc.name} (${acc.currency}${acc.type ? ` • ${acc.type}` : ''})`,
-                }))}
+                onValueChange={handleAccountSelect}
+                disabled={accountsLoading}
+                options={[
+                  ...accountOptions,
+                  {
+                    value: CREATE_ACCOUNT_OPTION_VALUE,
+                    label: '+ Create new account',
+                  },
+                ]}
               />
-            )}
-            {accountsError && (
-              <p className="text-xs text-red-500 mt-1">
-                Failed to load accounts.
-              </p>
-            )}
-          </div>
-
-          {/* Create new account inline */}
-          <div className="border border-slate-700 rounded-lg p-3 space-y-3 bg-slate-900/60">
-            <h3 className="text-sm font-semibold">
-              Or create a new account
-            </h3>
-            <form
-              className="space-y-3"
-              onSubmit={handleCreateAccountSubmit}
-            >
-              <div className="space-y-1">
-                <label className="block text-xs font-medium">
-                  Account name
-                </label>
-                <input
-                  type="text"
-                  className="w-full border border-slate-700 bg-slate-950 rounded px-3 py-2 text-sm"
-                  value={newAccountName}
-                  onChange={(e) => setNewAccountName(e.target.value)}
-                  placeholder="e.g. Interactive Brokers"
-                />
-              </div>
-              <div className="flex gap-3">
-                <div className="flex-1 space-y-1">
-                  <label className="block text-xs font-medium">
-                    Type
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full border border-slate-700 bg-slate-950 rounded px-3 py-2 text-sm"
-                    value={newAccountType}
-                    onChange={(e) =>
-                      setNewAccountType(e.target.value)
-                    }
-                    placeholder="BROKERAGE"
-                  />
-                </div>
-                <div className="w-24 space-y-1">
-                  <label className="block text-xs font-medium">
-                    Currency
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full border border-slate-700 bg-slate-950 rounded px-3 py-2 text-sm"
-                    value={newAccountCurrency}
-                    onChange={(e) =>
-                      setNewAccountCurrency(e.target.value)
-                    }
-                    placeholder="EUR"
-                  />
-                </div>
-              </div>
-              {accountFormError && (
-                <p className="text-xs text-red-500">
-                  {accountFormError}
+              {accountsError ? (
+                <p className="text-xs text-red-500 mt-1">
+                  Failed to load accounts.
                 </p>
+              ) : null}
+            </div>
+
+            <div className="space-y-3">
+              <label className="block text-sm font-semibold text-slate-100">
+                CSV file
+              </label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv,text/csv"
+                onChange={handleCsvChange}
+                style={{ display: 'none' }}
+                disabled={importTradesMutation.isPending}
+              />
+              <div className="flex flex-wrap items-center gap-3">
+                <Button
+                  appearance="secondary"
+                  tone="purple"
+                  size="md"
+                  type="button"
+                  onClick={handleUploadClick}
+                  disabled={importTradesMutation.isPending}
+                >
+                  {importTradesMutation.isPending ? 'Working...' : 'Upload CSV'}
+                </Button>
+                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300">
+                  {csvFileName ? (
+                    <span className="px-2 py-1 rounded-lg border border-slate-800 bg-slate-900">
+                      Selected: {csvFileName}
+                    </span>
+                  ) : null}
+                  {parsedRows ? (
+                    <span className="px-2 py-1 rounded-lg border border-purple-800 bg-purple-900/30 text-purple-100">
+                      {parsedRows.length} parsed
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+              {csvError && (
+                <p className="text-xs text-red-500">{csvError}</p>
               )}
+            </div>
+          </Dialog.Body>
+
+          <Dialog.Footer className="justify-between">
+            <div className="text-xs text-slate-400">
+              {parsedRows
+                ? `Ready to import ${parsedRows.length} trade${parsedRows.length === 1 ? '' : 's'}.`
+                : 'Upload a CSV to preview before importing.'}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                appearance="primary"
+                tone="purple"
+                type="button"
+                onClick={handleConfirmImport}
+                disabled={
+                  importTradesMutation.isPending ||
+                  !parsedRows ||
+                  parsedRows.length === 0
+                }
+              >
+                {importTradesMutation.isPending
+                  ? 'Importing...'
+                  : parsedRows
+                  ? `Import ${parsedRows.length} trades`
+                  : 'Import trades'}
+              </Button>
+            </div>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog>
+
+      <Dialog
+        open={isCreateAccountDialogOpen}
+        onOpenChange={(next) => {
+          if (!next) {
+            closeCreateAccountDialog();
+          } else {
+            setIsCreateAccountDialogOpen(true);
+          }
+        }}
+      >
+        <Dialog.Content
+          tone="purple"
+          className="bg-slate-950 border border-slate-800 text-slate-50 shadow-2xl"
+          title="Create a new account"
+          description="Add a trading account to import your CSV into."
+        >
+          <form className="space-y-6" onSubmit={handleCreateAccountSubmit}>
+            <Dialog.Body className="space-y-4">
+              <InputField
+                label="Account name"
+                placeholder="e.g. Interactive Brokers"
+                value={newAccountName}
+                onChange={(e) => setNewAccountName(e.target.value)}
+                status={accountFormError ? 'error' : 'default'}
+                supportingText={accountFormError ?? undefined}
+                disabled={createAccountMutation.isPending}
+                fullWidth
+              />
+              
+              <InputField
+                  label="Type"
+                  placeholder="BROKERAGE"
+                  value={newAccountType}
+                  onChange={(e) => setNewAccountType(e.target.value)}
+                  disabled={createAccountMutation.isPending}
+                  className="flex-1"
+                  fullWidth
+                />
+                
+                  <InputField
+                    label="Currency"
+                    placeholder="EUR"
+                    value={newAccountCurrency}
+                    onChange={(e) => setNewAccountCurrency(e.target.value)}
+                    disabled={createAccountMutation.isPending}
+                    fullWidth
+                  />
+               
+            </Dialog.Body>
+            <Dialog.Footer className="justify-between">
               <Button
                 appearance="secondary"
                 tone="neutral"
-                size="sm"
+                type="button"
+                onClick={closeCreateAccountDialog}
+                disabled={createAccountMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                appearance="primary"
+                tone="purple"
                 type="submit"
                 disabled={createAccountMutation.isPending}
               >
                 {createAccountMutation.isPending ? 'Creating...' : 'Create account'}
               </Button>
-            </form>
-          </div>
-
-          {/* CSV upload + confirm import */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium">
-              CSV file
-            </label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv,text/csv"
-              onChange={handleCsvChange}
-              className="hidden"
-              disabled={importTradesMutation.isPending}
-            />
-            <div className="flex flex-wrap items-center gap-3">
-              <Button
-                appearance="secondary"
-                tone="purple"
-                size="sm"
-                type="button"
-                onClick={handleUploadClick}
-                disabled={importTradesMutation.isPending}
-              >
-                {importTradesMutation.isPending ? 'Working...' : 'Upload CSV'}
-              </Button>
-              {csvFileName && (
-                <span className="text-xs text-slate-300">
-                  Selected: {csvFileName}
-                </span>
-              )}
-              {parsedRows && (
-                <span className="text-xs text-slate-300">
-                  Parsed {parsedRows.length} trade
-                  {parsedRows.length === 1 ? '' : 's'}.
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-slate-400">
-              The CSV should include at least date, symbol, side, quantity,
-              and price columns.
-            </p>
-            {csvError && (
-              <p className="text-xs text-red-500">{csvError}</p>
-            )}
-          </div>
-
-          <div className="flex justify-end">
-            <Button
-              appearance="primary"
-              tone="purple"
-              type="button"
-              onClick={handleConfirmImport}
-              disabled={
-                importTradesMutation.isPending ||
-                !parsedRows ||
-                parsedRows.length === 0
-              }
-            >
-              {importTradesMutation.isPending
-                ? 'Importing...'
-                : parsedRows
-                ? `Import ${parsedRows.length} trades`
-                : 'Import trades'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+            </Dialog.Footer>
+          </form>
+        </Dialog.Content>
+      </Dialog>
     </AppShell>
   );
 }
+
+

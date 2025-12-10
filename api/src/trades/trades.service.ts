@@ -2,7 +2,7 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTradeDto } from './dto/create-trade.dto';
 import { ImportTradesDto } from './dto/import-trades.dto';
-import { TradeSide } from '@prisma/client';
+import { AssetType, TradeSide } from '@prisma/client';
 
 @Injectable()
 export class TradesService {
@@ -92,22 +92,52 @@ export class TradesService {
    * - ensures asset exists (create if needed)
    */
   async importTrades(userId: string, dto: ImportTradesDto) {
-    await this.ensureAccountOwnedByUser(userId, dto.accountId);
+    const account = await this.ensureAccountOwnedByUser(
+      userId,
+      dto.accountId,
+    );
 
     const createdTrades = [];
 
     for (const row of dto.trades) {
-      const { symbol, name, date, side, quantity, price, fee } = row;
+      const {
+        symbol,
+        name,
+        date,
+        side,
+        quantity,
+        price,
+        fee,
+        assetType,
+        currency,
+      } = row;
+
+      const resolvedAssetType = assetType ?? AssetType.STOCK;
+      const resolvedCurrency = currency ?? account.currency ?? null;
+      const resolvedName = name ?? symbol;
+
+      const existingAsset = await this.prisma.asset.findUnique({
+        where: { symbol },
+      });
+
+      const shouldUpdateCurrency =
+        (currency !== undefined || !existingAsset?.currency) &&
+        !!resolvedCurrency;
 
       // find or create asset by symbol
       const asset = await this.prisma.asset.upsert({
         where: { symbol },
-        update: {},
+        update: {
+          ...(name ? { name: resolvedName } : {}),
+          ...(assetType ? { assetType: resolvedAssetType } : {}),
+          ...(shouldUpdateCurrency ? { currency: resolvedCurrency } : {}),
+        },
         create: {
           symbol,
-          assetType: 'STOCK', // or whatever you use
+          assetType: resolvedAssetType,
           // Use the CSV-provided name if it exists, otherwise fall back to symbol
-          name: (row as any).name ?? symbol,
+          name: resolvedName,
+          currency: resolvedCurrency,
         },
       });
       

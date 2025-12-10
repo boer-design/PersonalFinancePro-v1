@@ -19,7 +19,7 @@ export type TextStyle = {
   // Sizes are in px/line-height from the JSON.
   
   export const headingStyles: Record<
-    'xxl' | 'xl' | 'l' | 'm' | 's' | 'xs' | 'xxs',
+    'xxl' | 'xl' | 'l' | 'm' | 's' | 'xs' | 'xxs' | 'xxxs' | 'xxxxs',
     TextStyle
   > = {
     xxl: { fontSize: 60, lineHeight: 72, fontWeight: 800, letterSpacing: 0.6 },
@@ -29,10 +29,12 @@ export type TextStyle = {
     s: { fontSize: 24, lineHeight: 28.8, fontWeight: 800, letterSpacing: 0.24 },
     xs: { fontSize: 20, lineHeight: 24, fontWeight: 800, letterSpacing: 0.2 },
     xxs: { fontSize: 16, lineHeight: 19.2, fontWeight: 800, letterSpacing: 0.16 },
+    xxxs: { fontSize: 14, lineHeight: 16.8, fontWeight: 800, letterSpacing: 0.14 },
+    xxxxs: { fontSize: 12, lineHeight: 14.4, fontWeight: 800, letterSpacing: 0.12 },
   };
   
   export const bodyStyles: Record<
-    'xxl' | 'xl' | 'l' | 'm' | 's' | 'xs' | 'xxs',
+    'xxl' | 'xl' | 'l' | 'm' | 's' | 'xs' | 'xxs' | 'xxxs' | 'xxxxs',
     TextStyle
   > = {
     xxl: { fontSize: 60, lineHeight: 90, fontWeight: 200, letterSpacing: 0.6 },
@@ -42,6 +44,9 @@ export type TextStyle = {
     s: { fontSize: 24, lineHeight: 36, fontWeight: 200, letterSpacing: 0.24 },
     xs: { fontSize: 20, lineHeight: 30, fontWeight: 200, letterSpacing: 0.2 },
     xxs: { fontSize: 16, lineHeight: 24, fontWeight: 400, letterSpacing: 0.16 },
+    xxxs: { fontSize: 14, lineHeight: 21, fontWeight: 400, letterSpacing: 0.14 },
+    xxxxs: { fontSize: 12, lineHeight: 18, fontWeight: 400, letterSpacing: 0.12 },
+
   };
   
   // “Semantic” typography scale the app can use.

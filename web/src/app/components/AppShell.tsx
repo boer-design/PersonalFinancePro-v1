@@ -27,76 +27,82 @@ export default function AppShell({ children }: Props) {
   };
 
   const isDashboard = pathname === '/' || pathname === '/dashboard';
-  const isTrades = pathname.startsWith('/trades');
   const isPortfolio = pathname.startsWith('/portfolio');
 
   return (
     <div className="app-shell">
       <header className="app-shell__header">
-        <div className="app-shell__brand">
-          <span className="app-shell__brand-title">PFP</span>
-          <span className="app-shell__brand-sub">PersonalFinancePro</span>
+        <div className="app-shell__left">
+          <div className="app-shell__brand">
+            <div className="brand-mark" aria-hidden>
+              PFP
+            </div>
+            <div className="brand-copy">
+              <span className="app-shell__brand-title">PersonalFinancePro</span>
+              <span className="app-shell__brand-sub">Wealth cockpit</span>
+            </div>
+          </div>
+
+          <NavigationMenu.Root className="nav-menu-root">
+            <NavigationMenu.List className="nav-menu-list">
+              <NavigationMenu.Item>
+                <NavigationMenu.Link asChild>
+                  <Link
+                    href="/"
+                    className={
+                      'nav-menu-link' +
+                      (isDashboard ? ' nav-menu-link--active' : '')
+                    }
+                  >
+                    Dashboard
+                  </Link>
+                </NavigationMenu.Link>
+              </NavigationMenu.Item>
+              <NavigationMenu.Item>
+                <NavigationMenu.Link asChild>
+                  <Link
+                    href="/portfolio"
+                    className={
+                      'nav-menu-link' +
+                      (isPortfolio ? ' nav-menu-link--active' : '')
+                    }
+                  >
+                    Portfolio
+                  </Link>
+                </NavigationMenu.Link>
+              </NavigationMenu.Item>
+            </NavigationMenu.List>
+          </NavigationMenu.Root>
         </div>
 
-        <NavigationMenu.Root className="nav-menu-root">
-          <NavigationMenu.List className="nav-menu-list">
-            <NavigationMenu.Item>
-              <NavigationMenu.Link asChild>
-                <Link
-                  href="/"
-                  className={
-                    'nav-menu-link' + (isDashboard ? ' nav-menu-link--active' : '')
-                  }
-                >
-                  Dashboard
-                </Link>
-              </NavigationMenu.Link>
-            </NavigationMenu.Item>
-            <NavigationMenu.Item>
-              <NavigationMenu.Link asChild>
-                <Link
-                  href="/portfolio"
-                  className={
-                    'nav-menu-link' + (isPortfolio ? ' nav-menu-link--active' : '')
-                  }
-                >
-                  Portfolio
-                </Link>
-              </NavigationMenu.Link>
-            </NavigationMenu.Item>
-            <NavigationMenu.Item>
-              <NavigationMenu.Link asChild>
-                <Link
-                  href="/trades"
-                  className={
-                    'nav-menu-link' + (isTrades ? ' nav-menu-link--active' : '')
-                  }
-                >
-                  Trades
-                </Link>
-              </NavigationMenu.Link>
-            </NavigationMenu.Item>
-          </NavigationMenu.List>
-        </NavigationMenu.Root>
+        <div className="app-shell__right">
+          <div className="app-shell__stats">
+            <div className="stat-pill">
+              <span className="stat-label">Net Worth</span>
+              <span className="stat-value">$245,300</span>
+            </div>
+            <div className="stat-pill">
+              <span className="stat-label">Portfolio</span>
+              <span className="stat-value stat-value--positive">+8.4%</span>
+            </div>
+          </div>
 
-        <div className="app-shell__user">
-          {user && (
-            <div className="user-chip">
+          <div className="app-shell__user">
+            {user && (
               <Avatar.Root className="user-avatar">
                 <Avatar.Fallback className="user-avatar-fallback">
                   {user.email?.[0]?.toUpperCase() ?? 'U'}
                 </Avatar.Fallback>
               </Avatar.Root>
-              <span className="user-email">{user.email}</span>
-            </div>
-          )}
-          <button
-            type="button"
-            className="app-shell__logout-btn"
-            onClick={handleLogout}
-          >
-            Logout
-          </button>
+            )}
+            <button
+              type="button"
+              className="app-shell__logout-btn"
+              onClick={handleLogout}
+            >
+              Logout
+            </button>
+          </div>
         </div>
       </header>
 

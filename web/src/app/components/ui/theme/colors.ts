@@ -52,6 +52,32 @@ export const palette = {
     red800: "#570f0f",
     red900: "#2b0808",
     red1000: "#1e0505",
+
+    // Greens (success)
+    green50: "#caffea",
+    green100: "#a0f7d4",
+    green200: "#6df6bf",
+    green300: "#39f7ab",
+    green400: "#05f796",
+    green500: "#00c878",
+    green600: "#009b5c",
+    green700: "#006e41",
+    green800: "#004026",
+    green900: "#00310c",
+    green1000: "#00130b",
+
+    // Yellows (warning)
+    yellow50: "#fff9e9",
+    yellow100: "#fff6df",
+    yellow200: "#ffe8b0",
+    yellow300: "#fed777",
+    yellow400: "#fcc43f",
+    yellow500: "#fab008",
+    yellow600: "#c88e03",
+    yellow700: "#996a02",
+    yellow800: "#664701",
+    yellow900: "#332300",
+    yellow1000: "#1a1200",
   } as const;
   
   export type PaletteKey = keyof typeof palette;
@@ -76,12 +102,58 @@ export const palette = {
     border: {
       subtle: palette.neutral800,
       strong: palette.neutral600,
-      focus: palette.blue500,
+      focus: palette.purple500,
     },
     table: {
       bg: palette.neutral900,
       bgHover: palette.purple900,
       },
+    badge: {
+      neutral: {
+        solidBg: palette.neutral800,
+        solidBgHover: palette.neutral600,
+        solidBgActive: palette.neutral900,
+        softBg: palette.neutral900,
+        softBgHover: palette.neutral800,
+        softBgActive: palette.neutral800,
+        textOnSolid: palette.neutral0,
+        textOnSoft: palette.neutral100,
+        border: palette.neutral600,
+      },
+      purple: {
+        solidBg: palette.purple500,
+        solidBgHover: palette.purple400,
+        solidBgActive: palette.purple600,
+        softBg: palette.purple900,
+        softBgHover: palette.purple800,
+        softBgActive: palette.purple800,
+        textOnSolid: palette.neutral0,
+        textOnSoft: palette.purple100,
+        border: palette.purple400,
+      },
+      blue: {
+        solidBg: palette.blue600,
+        solidBgHover: palette.blue500,
+        solidBgActive: palette.blue700,
+        softBg: palette.blue900,
+        softBgHover: palette.blue800,
+        softBgActive: palette.blue800,
+        textOnSolid: palette.neutral0,
+        textOnSoft: palette.blue100,
+        border: palette.blue500,
+      },
+      red: {
+        solidBg: palette.red500,
+        solidBgHover: palette.red400,
+        solidBgActive: palette.red600,
+        softBg: palette.red900,
+        softBgHover: palette.red800,
+        softBgActive: palette.red800,
+        textOnSolid: palette.neutral0,
+        textOnSoft: palette.red100,
+        border: palette.red400,
+      },
+    },
     
     button: {
       primary: {

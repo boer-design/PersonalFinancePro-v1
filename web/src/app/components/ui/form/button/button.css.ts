@@ -1,30 +1,64 @@
-
 import { createVar, style, styleVariants } from "@vanilla-extract/css";
 import { tokens } from "../../theme/tokens";
+import { headingStyles } from "../../theme/typography";
 
-const { colors, radius, spacing, controlHeights, motion, typography } = tokens;
+const { colors, radius, spacing, motion, typography } = tokens;
 
-const bgVar = createVar();
-const bgHoverVar = createVar();
-const bgActiveVar = createVar();
-const textVar = createVar();
-const textHoverVar = createVar();
-const textActiveVar = createVar();
-const borderVar = createVar();
+// Semantic variable map for buttons
+export const buttonVars = {
+  color: {
+    bg: createVar(),
+    bgHover: createVar(),
+    bgActive: createVar(),
+    text: createVar(),
+    textHover: createVar(),
+    textActive: createVar(),
+    border: createVar(),
+    focusRing: createVar(),
+  },
+  layout: {
+    gap: createVar(),
+    radius: createVar(),
+    paddingSm: createVar(),
+    paddingMd: createVar(),
+    paddingLg: createVar(),
+    heightSm: createVar(),
+    heightMd: createVar(),
+    heightLg: createVar(),
+    borderWidth: createVar(),
+  },
+  state: {
+    disabledOpacity: createVar(),
+  },
+  typography: {
+    fontFamily: createVar(),
+    fontWeight: createVar(),
+    fontSize: createVar(),
+    lineHeight: createVar(),
+  },
+} as const;
+
+const bgVar = buttonVars.color.bg;
+const bgHoverVar = buttonVars.color.bgHover;
+const bgActiveVar = buttonVars.color.bgActive;
+const textVar = buttonVars.color.text;
+const textHoverVar = buttonVars.color.textHover;
+const textActiveVar = buttonVars.color.textActive;
+const borderVar = buttonVars.color.border;
 
 export const buttonBase = style({
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  gap: `${spacing[2]}px`,
-  borderRadius: `${radius.md}px`,
-  borderWidth: 1,
+  gap: buttonVars.layout.gap,
+  borderRadius: buttonVars.layout.radius,
+  borderWidth: buttonVars.layout.borderWidth,
   borderStyle: "solid",
   borderColor: "transparent",
-  fontFamily: typography.fontFamily.ui,
-  fontWeight: 900,
-  fontSize: `${typography.size.sm}px`,
-  lineHeight: typography.lineHeight.snug,
+  fontFamily: buttonVars.typography.fontFamily,
+  fontWeight: buttonVars.typography.fontWeight,
+  fontSize: buttonVars.typography.fontSize,
+  lineHeight: buttonVars.typography.lineHeight,
   cursor: "pointer",
   whiteSpace: "nowrap",
   textDecoration: "none",
@@ -36,13 +70,37 @@ export const buttonBase = style({
     `box-shadow ${motion.duration.fast} ${motion.easing.standard}`,
     `transform ${motion.duration.fast} ${motion.easing.standard}`,
   ].join(", "),
+  vars: {
+    [buttonVars.layout.gap]: `${spacing[2]}px`,
+    [buttonVars.layout.radius]: `${radius.md}px`,
+    [buttonVars.layout.paddingSm]: `${spacing[3]}px`,
+    [buttonVars.layout.paddingMd]: `${spacing[4]}px`,
+    [buttonVars.layout.paddingLg]: `${spacing[6]}px`,
+    [buttonVars.layout.heightSm]: `${headingStyles.xxxs.lineHeight}px`,
+    [buttonVars.layout.heightMd]: `${headingStyles.xxs.lineHeight}px`,
+    [buttonVars.layout.heightLg]: `${headingStyles.xs.lineHeight}px`,
+    [buttonVars.layout.borderWidth]: "1px",
+    [buttonVars.color.bg]: colors.button.signal.purple.bg,
+    [buttonVars.color.bgHover]: colors.button.signal.purple.bgHover,
+    [buttonVars.color.bgActive]: colors.button.signal.purple.bgActive,
+    [buttonVars.color.text]: colors.button.signal.purple.text,
+    [buttonVars.color.textHover]: colors.button.signal.purple.text,
+    [buttonVars.color.textActive]: colors.button.signal.purple.text,
+    [buttonVars.color.border]: colors.button.signal.purple.border,
+    [buttonVars.color.focusRing]: colors.border.focus,
+    [buttonVars.state.disabledOpacity]: "0.55",
+    [buttonVars.typography.fontFamily]: typography.fontFamily.ui,
+    [buttonVars.typography.fontWeight]: `${headingStyles.xxs.fontWeight}`,
+    [buttonVars.typography.fontSize]: `${headingStyles.xxs.fontSize}px`,
+    [buttonVars.typography.lineHeight]: `${headingStyles.xxs.lineHeight}px`,
+  },
   selectors: {
     "&:focus-visible": {
-      boxShadow: `0 0 0 2px ${colors.border.focus}`,
+      boxShadow: `0 0 0 2px ${buttonVars.color.focusRing}`,
     },
     "&:disabled": {
       cursor: "not-allowed",
-      opacity: 0.55,
+      opacity: buttonVars.state.disabledOpacity,
       boxShadow: "none",
     },
   },
@@ -88,7 +146,7 @@ export const buttonTone = styleVariants({
       [bgVar]: colors.button.signal.neutral.bg,
       [bgHoverVar]: colors.button.signal.neutral.bgHover,
       [bgActiveVar]: colors.button.signal.neutral.bgActive,
-      [textVar]: colors.button.signal.neutral.text, // default text on transparent
+      [textVar]: colors.button.signal.neutral.text,
       [textHoverVar]: colors.button.signal.neutral.hoverText ?? colors.text.inverse,
       [textActiveVar]: colors.button.signal.neutral.hoverText ?? colors.text.inverse,
       [borderVar]: colors.button.signal.neutral.border,
@@ -149,16 +207,16 @@ export const buttonAppearance = styleVariants({
 
 export const buttonSize = styleVariants({
   sm: {
-    height: `${controlHeights.sm}px`,
-    paddingInline: `${spacing[2]}px`,
+    height: buttonVars.layout.heightSm,
+    padding: buttonVars.layout.paddingSm,
   },
   md: {
-    height: `${controlHeights.md}px`,
-    paddingInline: `${spacing[3]}px`,
+    height: buttonVars.layout.heightMd,
+    padding: buttonVars.layout.paddingMd,
   },
   lg: {
-    height: `${controlHeights.lg}px`,
-    paddingInline: `${spacing[4]}px`,
+    height: buttonVars.layout.heightLg,
+    padding: buttonVars.layout.paddingLg,
   },
 });
 
@@ -167,5 +225,5 @@ export const fullWidth = style({
 });
 
 export const iconOnly = style({
-  paddingInline: `${spacing[2]}px`,
+  padding: buttonVars.layout.paddingSm,
 });

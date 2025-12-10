@@ -8,6 +8,8 @@ import {
   selectTone,
   selectRoot,
   selectLabel,
+  selectLabelRow,
+  selectLabelMeta,
   selectTrigger,
   selectValue,
   selectIcon,
@@ -15,6 +17,7 @@ import {
   selectViewport,
   selectItem,
   selectSeparator,
+  selectItemIndicator,
 } from "./select.css";
 import { classNames } from "../../utils/classNames";
 import { ChevronUpDownIcon, CheckIcon } from "@heroicons/react/24/outline";
@@ -27,6 +30,7 @@ export type SelectOption = {
 
 export interface SelectProps {
   label?: string;
+  labelMeta?: string;
   placeholder?: string;
   value?: string;
   defaultValue?: string;
@@ -38,6 +42,7 @@ export interface SelectProps {
 
 export function Select({
   label,
+  labelMeta,
   placeholder = "Select",
   value,
   defaultValue,
@@ -47,21 +52,34 @@ export function Select({
   // tone/appearance removed; defaults to purple solid
   className,
 }: SelectProps) {
-  const hasValue = value !== undefined ? value !== "" : undefined;
+  const controlledValue = value === "" ? undefined : value;
+  const initialDefaultValue = defaultValue === "" ? undefined : defaultValue;
+  const ariaLabel = label ?? placeholder;
+  const labelId = React.useId();
+  const rootValueProps =
+    controlledValue === undefined
+      ? { defaultValue: initialDefaultValue }
+      : { value: controlledValue };
 
   return (
     <div className={classNames(selectRoot, selectTone.purple)}>
-      {label ? <label className={selectLabel}>{label}</label> : null}
-      <RadixSelect.Root
-        value={value}
-        defaultValue={defaultValue}
-        onValueChange={onValueChange}
-        disabled={disabled}
-      >
+      {label || labelMeta ? (
+        <div className={selectLabelRow}>
+          {label ? (
+            <span className={selectLabel} id={labelId}>
+              {label}
+            </span>
+          ) : (
+            <span />
+          )}
+          {labelMeta ? <span className={selectLabelMeta}>{labelMeta}</span> : null}
+        </div>
+      ) : null}
+      <RadixSelect.Root {...rootValueProps} onValueChange={onValueChange} disabled={disabled}>
         <RadixSelect.Trigger
           className={classNames(selectTrigger, selectAppearance.solid, className)}
-          data-placeholder={hasValue === false}
-          data-disabled={disabled}
+          aria-label={ariaLabel}
+          aria-labelledby={label ? labelId : undefined}
         >
           <RadixSelect.Value placeholder={placeholder} className={selectValue} />
           <RadixSelect.Icon className={selectIcon} aria-hidden="true">
@@ -69,7 +87,11 @@ export function Select({
           </RadixSelect.Icon>
         </RadixSelect.Trigger>
         <RadixSelect.Portal>
-          <RadixSelect.Content className={selectContent} position="popper" sideOffset={6}>
+          <RadixSelect.Content
+            className={classNames(selectContent, selectTone.purple)}
+            position="popper"
+            sideOffset={6}
+          >
             <RadixSelect.ScrollUpButton className={selectSeparator} />
             <RadixSelect.Viewport className={selectViewport}>
               {options.map((opt) => (
@@ -80,7 +102,10 @@ export function Select({
                   className={selectItem}
                 >
                   <RadixSelect.ItemText>{opt.label}</RadixSelect.ItemText>
-                  <RadixSelect.ItemIndicator aria-hidden="true">
+                  <RadixSelect.ItemIndicator
+                    aria-hidden="true"
+                    className={selectItemIndicator}
+                  >
                     <CheckIcon width={14} height={14} />
                   </RadixSelect.ItemIndicator>
                 </RadixSelect.Item>
