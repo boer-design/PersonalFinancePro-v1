@@ -87,7 +87,7 @@ export default function DesignSystemPage() {
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 20, marginBottom: 12 }}>Select – Signals</h2>
+        <h2 style={{ fontSize: 20, marginBottom: 12 }}>Select</h2>
         <div
           style={{
             display: "grid",
@@ -95,55 +95,37 @@ export default function DesignSystemPage() {
             gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
           }}
         >
-          {tones.map((tone) => (
+          <div
+            style={{
+              border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: 12,
+              padding: 12,
+              background: "#1b181b",
+            }}
+          >
             <div
-              key={`select-${tone}`}
               style={{
-                border: "1px solid rgba(255,255,255,0.06)",
-                borderRadius: 12,
-                padding: 12,
-                background: "#1b181b",
+                fontSize: 12,
+                color: "#cbd5e1",
+                marginBottom: 8,
+                display: "flex",
+                justifyContent: "space-between",
               }}
             >
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "#cbd5e1",
-                  marginBottom: 8,
-                  display: "flex",
-                  justifyContent: "space-between",
-                }}
-              >
-                <span style={{ textTransform: "capitalize" }}>{tone}</span>
-                <span style={{ textTransform: "capitalize" }}>Solid</span>
-              </div>
-              <Select
-                tone={tone}
-                appearance="solid"
-                placeholder="Select Account"
-                options={[
-                  { label: "Select Account", value: "placeholder" },
-                  { label: "LYNX - Brokerage", value: "lynx" },
-                  { label: "DEGIRO - Brokerage", value: "degiro" },
-                  { label: "LYNX", value: "lynx2" },
-                  { label: "DEGIRO", value: "degiro2" },
-                ]}
-              />
-              <div style={{ marginTop: 12 }}>
-                <Select
-                  tone={tone}
-                  appearance="outline"
-                  placeholder="Outline"
-                  options={[
-                    { label: "Primary", value: "primary" },
-                    { label: "Default", value: "default" },
-                    { label: "Hover", value: "hover" },
-                    { label: "Active", value: "active" },
-                  ]}
-                />
-              </div>
+              <span>Purple</span>
+              <span>Solid</span>
             </div>
-          ))}
+            <Select
+              placeholder="Select Account"
+              options={[
+                { label: "Select Account", value: "placeholder" },
+                { label: "LYNX - Brokerage", value: "lynx" },
+                { label: "DEGIRO - Brokerage", value: "degiro" },
+                { label: "LYNX", value: "lynx2" },
+                { label: "DEGIRO", value: "degiro2" },
+              ]}
+            />
+          </div>
         </div>
       </section>
 

@@ -1,6 +1,6 @@
 // web/src/components/ui/theme/spacing.ts
 
-// 4px base grid
+// 4px base scale
 export const spacing = {
     0: 0,
     1: 4,
@@ -15,14 +15,14 @@ export const spacing = {
     16: 64,
   } as const;
   
-  export type SpacingScale = keyof typeof spacing;
+  export type SpacingKey = keyof typeof spacing;
   
-  // Common control heights
+  // Control heights mainly used for buttons/inputs
   export const controlHeights = {
     sm: 28,
     md: 36,
     lg: 44,
   } as const;
   
-  export type ControlSize = keyof typeof controlHeights;
+  export type ControlSizeKey = keyof typeof controlHeights;
   

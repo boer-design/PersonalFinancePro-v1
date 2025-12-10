@@ -14,26 +14,32 @@ import {
 
 import {
   buttonBase,
-  buttonVariant,
+  buttonAppearance,
+  buttonTone,
   buttonSize,
   fullWidth,
   iconOnly as iconOnlyStyle,
 } from "./button.css";
 import { classNames } from "../../utils/classNames";
 
-export type ButtonVariant = "primary" | "secondary" | "subtle" | "destructive";
 export type ButtonSize = "sm" | "md" | "lg";
+export type ButtonAppearance = "primary" | "secondary" | "tertiary";
+export type ButtonTone = "purple" | "blue" | "red" | "neutral";
 
 export interface ButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement> {
   /**
-   * Visual style of the button.
-   */
-  variant?: ButtonVariant;
-  /**
    * Control size.
    */
   size?: ButtonSize;
+  /**
+   * Visual appearance (filled, outline, ghost).
+   */
+  appearance?: ButtonAppearance;
+  /**
+   * Color signal tone.
+   */
+  tone?: ButtonTone;
   /**
    * Stretch to the full width of the parent.
    */
@@ -78,7 +84,8 @@ const iconMap = {
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
-      variant = "primary",
+      appearance = "primary",
+      tone = "purple",
       size = "md",
       fullWidth: fullWidthProp = false,
       asChild,
@@ -101,7 +108,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const classes = classNames(
       buttonBase,
-      buttonVariant[variant],
+      buttonAppearance[appearance],
+      buttonTone[tone],
       buttonSize[size],
       fullWidthProp && fullWidth,
       iconOnly && iconOnlyStyle,

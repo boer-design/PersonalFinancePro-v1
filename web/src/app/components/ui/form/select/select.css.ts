@@ -29,48 +29,6 @@ export const selectTone = styleVariants({
       [iconVar]: colors.text.subtle,
     },
   },
-  blue: {
-    vars: {
-      [bgVar]: colors.button.signal.blue.bg,
-      [borderVar]: colors.button.signal.blue.border,
-      [textVar]: colors.text.primary,
-      [placeholderVar]: colors.text.subtle,
-      [focusVar]: colors.border.focus,
-      [optionHoverVar]: colors.button.signal.blue.bgHover,
-      [triggerBorderVar]: colors.border.subtle,
-      [triggerBgVar]: colors.background.surface,
-      [triggerTextVar]: colors.text.primary,
-      [iconVar]: colors.text.subtle,
-    },
-  },
-  red: {
-    vars: {
-      [bgVar]: colors.button.signal.red.bg,
-      [borderVar]: colors.button.signal.red.border,
-      [textVar]: colors.text.primary,
-      [placeholderVar]: colors.text.subtle,
-      [focusVar]: colors.border.focus,
-      [optionHoverVar]: colors.button.signal.red.bgHover,
-      [triggerBorderVar]: colors.border.subtle,
-      [triggerBgVar]: colors.background.surface,
-      [triggerTextVar]: colors.text.primary,
-      [iconVar]: colors.text.subtle,
-    },
-  },
-  neutral: {
-    vars: {
-      [bgVar]: colors.button.signal.neutral.bg,
-      [borderVar]: colors.button.signal.neutral.border,
-      [textVar]: colors.button.signal.neutral.text,
-      [placeholderVar]: colors.text.subtle,
-      [focusVar]: colors.border.focus,
-      [optionHoverVar]: colors.button.signal.neutral.bgHover,
-      [triggerBorderVar]: colors.border.subtle,
-      [triggerBgVar]: colors.background.surface,
-      [triggerTextVar]: colors.text.primary,
-      [iconVar]: colors.text.subtle,
-    },
-  },
 });
 
 export const selectRoot = style({
@@ -136,14 +94,7 @@ export const selectIcon = style({
 });
 
 export const selectAppearance = styleVariants({
-  solid: {
-    // inherits tone-driven vars via selectTone
-  },
-  outline: {
-    backgroundColor: "transparent",
-    borderColor: triggerBorderVar,
-    color: triggerTextVar,
-  },
+  solid: {},
 });
 
 export const selectContent = style({

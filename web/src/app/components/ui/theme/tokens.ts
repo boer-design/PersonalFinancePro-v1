@@ -1,25 +1,19 @@
 // web/src/components/ui/theme/tokens.ts
 
-import { rawColors, semanticColors } from './colors';
-import { typography } from './typography';
-import { spacing, controlHeights } from './spacing';
-import { radius } from './radius';
-import { shadows } from './shadows';
-import { motion } from './motion';
-import { zIndex } from './zIndex';
+import { palette, semanticColors } from "./colors";
+import { radius } from "./radius";
+import { spacing, controlHeights } from "./spacing";
+import { motion } from "./motion";
+import { typography } from "./typography";
 
 export const tokens = {
-  colors: {
-    raw: rawColors,
-    semantic: semanticColors,
-  },
-  typography,
+  palette,
+  colors: semanticColors,
+  radius,
   spacing,
   controlHeights,
-  radius,
-  shadows,
   motion,
-  zIndex,
+  typography,
 } as const;
 
 export type Tokens = typeof tokens;

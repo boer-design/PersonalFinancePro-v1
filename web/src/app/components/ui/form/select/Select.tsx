@@ -19,9 +19,6 @@ import {
 import { classNames } from "../../utils/classNames";
 import { ChevronUpDownIcon, CheckIcon } from "@heroicons/react/24/outline";
 
-export type SelectAppearance = "solid" | "outline";
-export type SelectTone = "purple" | "blue" | "red" | "neutral";
-
 export type SelectOption = {
   label: string;
   value: string;
@@ -36,8 +33,6 @@ export interface SelectProps {
   onValueChange?: (value: string) => void;
   options: SelectOption[];
   disabled?: boolean;
-  tone?: SelectTone;
-  appearance?: SelectAppearance;
   className?: string;
 }
 
@@ -49,14 +44,13 @@ export function Select({
   onValueChange,
   options,
   disabled,
-  tone = "purple",
-  appearance = "solid",
+  // tone/appearance removed; defaults to purple solid
   className,
 }: SelectProps) {
   const hasValue = value !== undefined ? value !== "" : undefined;
 
   return (
-    <div className={classNames(selectRoot, selectTone[tone])}>
+    <div className={classNames(selectRoot, selectTone.purple)}>
       {label ? <label className={selectLabel}>{label}</label> : null}
       <RadixSelect.Root
         value={value}
@@ -65,7 +59,7 @@ export function Select({
         disabled={disabled}
       >
         <RadixSelect.Trigger
-          className={classNames(selectTrigger, selectAppearance[appearance], className)}
+          className={classNames(selectTrigger, selectAppearance.solid, className)}
           data-placeholder={hasValue === false}
           data-disabled={disabled}
         >

@@ -9,7 +9,6 @@ import React, {
   useRef,
 } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import * as Select from '@radix-ui/react-select';
 import {
   useQuery,
   useQueryClient,
@@ -20,6 +19,7 @@ import Papa from 'papaparse';
 import AppShell from '../components/AppShell';
 import { useApi } from '../lib/api';
 import { useAuth } from '../lib/auth';
+import { Button, Select, Table } from '../components/ui';
 
 // ---- Types ----
 
@@ -109,70 +109,6 @@ function Toast({
         </div>
       </div>
     </div>
-  );
-}
-
-// ---- Radix Select wrapper ----
-
-type Option = { label: string; value: string };
-
-function RadixSelect({
-  value,
-  onValueChange,
-  options,
-  placeholder,
-  ariaLabel,
-  disabled,
-  className,
-}: {
-  value: string;
-  onValueChange: (v: string) => void;
-  options: Option[];
-  placeholder?: string;
-  ariaLabel: string;
-  disabled?: boolean;
-  className?: string;
-}) {
-  // Radix Select disallows empty-string item values; use undefined for "no selection"
-  const normalizedValue = value === '' ? undefined : value;
-  return (
-    <Select.Root
-      value={normalizedValue}
-      onValueChange={(v) => onValueChange(v ?? '')}
-      disabled={disabled}
-    >
-      <Select.Trigger
-        aria-label={ariaLabel}
-        className={`radix-select-trigger ${className ?? ''}`}
-      >
-        <Select.Value placeholder={placeholder} />
-        <Select.Icon className="radix-select-icon">▾</Select.Icon>
-      </Select.Trigger>
-      <Select.Portal>
-        <Select.Content className="radix-select-content" position="popper">
-          <Select.ScrollUpButton className="radix-select-scroll">
-            ▲
-          </Select.ScrollUpButton>
-          <Select.Viewport className="radix-select-viewport">
-            {options.map((opt) => (
-              <Select.Item
-                key={opt.value}
-                value={opt.value}
-                className="radix-select-item"
-              >
-                <Select.ItemText>{opt.label}</Select.ItemText>
-                <Select.ItemIndicator className="radix-select-indicator">
-                  •
-                </Select.ItemIndicator>
-              </Select.Item>
-            ))}
-          </Select.Viewport>
-          <Select.ScrollDownButton className="radix-select-scroll">
-            ▼
-          </Select.ScrollDownButton>
-        </Select.Content>
-      </Select.Portal>
-    </Select.Root>
   );
 }
 
@@ -560,25 +496,20 @@ export default function TradesPage() {
         <section className="space-y-3">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">
-                Account filter
-              </label>
-              <RadixSelect
-                ariaLabel="Account filter"
+              <Select
+                label="Account filter"
+                placeholder="All accounts"
                 value={accountFilter || 'ALL_ACCOUNTS'}
                 onValueChange={(v) => {
                   setAccountFilter(v === 'ALL_ACCOUNTS' ? '' : v);
                   setPage(1);
                 }}
                 disabled={accountsLoading || accountsError}
-                placeholder="All accounts"
                 options={[
                   { value: 'ALL_ACCOUNTS', label: 'All accounts' },
                   ...(accounts ?? []).map((acc) => ({
                     value: acc.id,
-                    label: `${acc.name} (${acc.currency}${
-                      acc.type ? ` • ${acc.type}` : ''
-                    })`,
+                    label: `${acc.name} (${acc.currency}${acc.type ? ` • ${acc.type}` : ''})`,
                   })),
                 ]}
               />
@@ -589,8 +520,9 @@ export default function TradesPage() {
               )}
             </div>
 
-            <button
-              type="button"
+            <Button
+              appearance="secondary"
+              tone="purple"
               onClick={() => {
                 setIsImportModalOpen(true);
                 setCsvError(null);
@@ -600,10 +532,9 @@ export default function TradesPage() {
                   fileInputRef.current.value = '';
                 }
               }}
-              className="px-4 py-2 rounded-lg border border-slate-600 bg-indigo-600/10 text-indigo-200 hover:bg-indigo-600/20 text-sm font-medium"
             >
               Import CSV
-            </button>
+            </Button>
           </div>
 
           <div className="border border-slate-700 rounded-xl overflow-hidden">
@@ -622,70 +553,57 @@ export default function TradesPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead className="bg-slate-900/80 border-b border-slate-700">
-                    <tr>
-                      <th className="px-3 py-2 text-left font-medium">
-                        Date
-                      </th>
-                      <th className="px-3 py-2 text-left font-medium">
-                        Account
-                      </th>
-                      <th className="px-3 py-2 text-left font-medium">
-                        Symbol
-                      </th>
-                      <th className="px-3 py-2 text-left font-medium">
-                        Side
-                      </th>
-                      <th className="px-3 py-2 text-right font-medium">
-                        Quantity
-                      </th>
-                      <th className="px-3 py-2 text-right font-medium">
-                        Price
-                      </th>
-                      <th className="px-3 py-2 text-right font-medium">
-                        Fee
-                      </th>
-                      <th className="px-3 py-2 text-right font-medium">
-                        Total
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <Table>
+                  <Table.Head>
+                    <Table.HeadRow>
+                      <Table.HeaderCell>
+                        <Table.ColumnTitle>Date</Table.ColumnTitle>
+                      </Table.HeaderCell>
+                      <Table.HeaderCell>
+                        <Table.ColumnTitle>Account</Table.ColumnTitle>
+                      </Table.HeaderCell>
+                      <Table.HeaderCell>
+                        <Table.ColumnTitle>Symbol</Table.ColumnTitle>
+                      </Table.HeaderCell>
+                      <Table.HeaderCell>
+                        <Table.ColumnTitle>Side</Table.ColumnTitle>
+                      </Table.HeaderCell>
+                      <Table.HeaderCell align="right">
+                        <Table.ColumnTitle align="right">Quantity</Table.ColumnTitle>
+                      </Table.HeaderCell>
+                      <Table.HeaderCell align="right">
+                        <Table.ColumnTitle align="right">Price</Table.ColumnTitle>
+                      </Table.HeaderCell>
+                      <Table.HeaderCell align="right">
+                        <Table.ColumnTitle align="right">Fee</Table.ColumnTitle>
+                      </Table.HeaderCell>
+                      <Table.HeaderCell align="right">
+                        <Table.ColumnTitle align="right">Total</Table.ColumnTitle>
+                      </Table.HeaderCell>
+                    </Table.HeadRow>
+                  </Table.Head>
+                  <Table.Body>
                     {trades.map((t) => {
                       const total = t.quantity * t.price + t.fee;
                       return (
-                        <tr
-                          key={t.id}
-                          className="border-t border-slate-700/60 hover:bg-slate-900/60"
-                        >
-                          <td className="px-3 py-2">
+                        <Table.Row key={t.id}>
+                          <Table.Cell>
                             {new Date(t.date).toLocaleDateString()}
-                          </td>
-                          <td className="px-3 py-2">
-                            {t.accountName || getAccountName(t.accountId)}
-                          </td>
-                          <td className="px-3 py-2">
-                            {getSymbol(t) || '—'}
-                          </td>
-                          <td className="px-3 py-2">{t.side}</td>
-                          <td className="px-3 py-2 text-right">
+                          </Table.Cell>
+                          <Table.Cell>{t.accountName || getAccountName(t.accountId)}</Table.Cell>
+                          <Table.Cell>{getSymbol(t) || '—'}</Table.Cell>
+                          <Table.Cell>{t.side}</Table.Cell>
+                          <Table.Cell align="right">
                             {t.quantity.toLocaleString()}
-                          </td>
-                          <td className="px-3 py-2 text-right">
-                            {t.price.toFixed(2)}
-                          </td>
-                          <td className="px-3 py-2 text-right">
-                            {t.fee.toFixed(2)}
-                          </td>
-                          <td className="px-3 py-2 text-right">
-                            {total.toFixed(2)}
-                          </td>
-                        </tr>
+                          </Table.Cell>
+                          <Table.Cell align="right">{t.price.toFixed(2)}</Table.Cell>
+                          <Table.Cell align="right">{t.fee.toFixed(2)}</Table.Cell>
+                          <Table.Cell align="right">{total.toFixed(2)}</Table.Cell>
+                        </Table.Row>
                       );
                     })}
-                  </tbody>
-                </table>
+                  </Table.Body>
+                </Table>
               </div>
             )}
           </div>
@@ -696,22 +614,24 @@ export default function TradesPage() {
               Page {page} of {totalPages}
             </div>
             <div className="space-x-2">
-              <button
-                type="button"
-                className="px-3 py-1 border border-slate-600 rounded-lg disabled:opacity-50 text-xs"
+              <Button
+                appearance="secondary"
+                tone="neutral"
+                size="sm"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}
               >
                 Previous
-              </button>
-              <button
-                type="button"
-                className="px-3 py-1 border border-slate-600 rounded-lg disabled:opacity-50 text-xs"
+              </Button>
+              <Button
+                appearance="secondary"
+                tone="neutral"
+                size="sm"
                 onClick={() => setPage((p) => p + 1)}
                 disabled={page >= totalPages}
               >
                 Next
-              </button>
+              </Button>
             </div>
           </div>
         </section>
@@ -748,18 +668,14 @@ export default function TradesPage() {
                 No accounts yet. Create one to import trades.
               </div>
             ) : (
-              <RadixSelect
-                ariaLabel="Import into account"
+              <Select
+                placeholder="Select an account..."
                 value={selectedAccountIdForImport}
                 onValueChange={setSelectedAccountIdForImport}
                 disabled={accountsLoading || accountsError}
-                placeholder="Select an account..."
-                className="w-full"
                 options={(accounts ?? []).map((acc) => ({
                   value: acc.id,
-                  label: `${acc.name} (${acc.currency}${
-                    acc.type ? ` • ${acc.type}` : ''
-                  })`,
+                  label: `${acc.name} (${acc.currency}${acc.type ? ` • ${acc.type}` : ''})`,
                 }))}
               />
             )}
@@ -826,15 +742,15 @@ export default function TradesPage() {
                   {accountFormError}
                 </p>
               )}
-              <button
+              <Button
+                appearance="secondary"
+                tone="neutral"
+                size="sm"
                 type="submit"
                 disabled={createAccountMutation.isPending}
-                className="inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-600 bg-slate-800 hover:bg-slate-700 text-xs font-medium disabled:opacity-50"
               >
-                {createAccountMutation.isPending
-                  ? 'Creating...'
-                  : 'Create account'}
-              </button>
+                {createAccountMutation.isPending ? 'Creating...' : 'Create account'}
+              </Button>
             </form>
           </div>
 
@@ -852,14 +768,16 @@ export default function TradesPage() {
               disabled={importTradesMutation.isPending}
             />
             <div className="flex flex-wrap items-center gap-3">
-              <button
+              <Button
+                appearance="secondary"
+                tone="purple"
+                size="sm"
                 type="button"
                 onClick={handleUploadClick}
                 disabled={importTradesMutation.isPending}
-                className="px-3 py-2 rounded-lg border border-slate-600 bg-slate-800 hover:bg-slate-700 text-sm font-medium disabled:opacity-50"
               >
                 {importTradesMutation.isPending ? 'Working...' : 'Upload CSV'}
-              </button>
+              </Button>
               {csvFileName && (
                 <span className="text-xs text-slate-300">
                   Selected: {csvFileName}
@@ -882,7 +800,9 @@ export default function TradesPage() {
           </div>
 
           <div className="flex justify-end">
-            <button
+            <Button
+              appearance="primary"
+              tone="purple"
               type="button"
               onClick={handleConfirmImport}
               disabled={
@@ -890,14 +810,13 @@ export default function TradesPage() {
                 !parsedRows ||
                 parsedRows.length === 0
               }
-              className="px-4 py-2 rounded-lg border border-slate-600 bg-slate-800 hover:bg-slate-700 text-sm font-medium disabled:opacity-50"
             >
               {importTradesMutation.isPending
                 ? 'Importing...'
                 : parsedRows
                 ? `Import ${parsedRows.length} trades`
                 : 'Import trades'}
-            </button>
+            </Button>
           </div>
         </div>
       </Modal>

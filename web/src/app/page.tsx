@@ -4,10 +4,10 @@ import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import * as Separator from '@radix-ui/react-separator';
-import * as ScrollArea from '@radix-ui/react-scroll-area';
 import { useAuth } from './lib/auth';
 import { useApi } from './lib/api';
 import AppShell from './components/AppShell';
+import { Table } from './components/ui';
 
 // --- Types that match our backend shape ---
 type AccountSummary = {
@@ -133,72 +133,65 @@ export default function DashboardPage() {
                   </p>
                 </div>
               </div>
-              <ScrollArea.Root className="max-h-[420px]">
-                <ScrollArea.Viewport className="p-5">
-                  {data.accounts.length === 0 ? (
-                    <p className="text-sm text-slate-300">No accounts yet.</p>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full text-sm">
-                        <thead className="bg-slate-900/80 border-b border-slate-700">
-                          <tr>
-                            <th className="px-3 py-2 text-left font-medium">
-                              Name
-                            </th>
-                            <th className="px-3 py-2 text-left font-medium">
-                              Currency
-                            </th>
-                            <th className="px-3 py-2 text-right font-medium">
-                              Market value
-                            </th>
-                            <th className="px-3 py-2 text-right font-medium">
-                              Realized P/L
-                            </th>
-                            <th className="px-3 py-2 text-right font-medium">
-                              Unrealized P/L
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {data.accounts.map((acc) => (
-                            <tr
-                              key={acc.accountId}
-                              className="border-t border-slate-700/60"
-                            >
-                              <td className="px-3 py-2">{acc.name}</td>
-                              <td className="px-3 py-2">{acc.currency}</td>
-                              <td className="px-3 py-2 text-right">
-                                {formatCurrency(
-                                  acc.totals.totalMarketValue,
-                                  acc.currency,
-                                )}
-                              </td>
-                              <td className="px-3 py-2 text-right">
-                                {formatCurrency(
-                                  acc.totals.realizedPnl,
-                                  acc.currency,
-                                )}
-                              </td>
-                              <td className="px-3 py-2 text-right">
-                                {formatCurrency(
-                                  acc.totals.unrealizedPnl,
-                                  acc.currency,
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </ScrollArea.Viewport>
-                <ScrollArea.Scrollbar
-                  orientation="vertical"
-                  className="ScrollAreaScrollbar"
-                >
-                  <ScrollArea.Thumb className="ScrollAreaThumb" />
-                </ScrollArea.Scrollbar>
-              </ScrollArea.Root>
+              <div className="p-5">
+                {data.accounts.length === 0 ? (
+                  <p className="text-sm text-slate-300">No accounts yet.</p>
+                ) : (
+                  <Table>
+                    <Table.Head>
+                      <Table.HeadRow>
+                        <Table.HeaderCell>
+                          <Table.ColumnTitle>Name</Table.ColumnTitle>
+                        </Table.HeaderCell>
+                        <Table.HeaderCell>
+                          <Table.ColumnTitle>Currency</Table.ColumnTitle>
+                        </Table.HeaderCell>
+                        <Table.HeaderCell align="right">
+                          <Table.ColumnTitle align="right">
+                            Market value
+                          </Table.ColumnTitle>
+                        </Table.HeaderCell>
+                        <Table.HeaderCell align="right">
+                          <Table.ColumnTitle align="right">
+                            Realized P/L
+                          </Table.ColumnTitle>
+                        </Table.HeaderCell>
+                        <Table.HeaderCell align="right">
+                          <Table.ColumnTitle align="right">
+                            Unrealized P/L
+                          </Table.ColumnTitle>
+                        </Table.HeaderCell>
+                      </Table.HeadRow>
+                    </Table.Head>
+                    <Table.Body>
+                      {data.accounts.map((acc) => (
+                        <Table.Row key={acc.accountId}>
+                          <Table.Cell>{acc.name}</Table.Cell>
+                          <Table.Cell>{acc.currency}</Table.Cell>
+                          <Table.Cell align="right">
+                            {formatCurrency(
+                              acc.totals.totalMarketValue,
+                              acc.currency,
+                            )}
+                          </Table.Cell>
+                          <Table.Cell align="right">
+                            {formatCurrency(
+                              acc.totals.realizedPnl,
+                              acc.currency,
+                            )}
+                          </Table.Cell>
+                          <Table.Cell align="right">
+                            {formatCurrency(
+                              acc.totals.unrealizedPnl,
+                              acc.currency,
+                            )}
+                          </Table.Cell>
+                        </Table.Row>
+                      ))}
+                    </Table.Body>
+                  </Table>
+                )}
+              </div>
             </section>
           </div>
         )}

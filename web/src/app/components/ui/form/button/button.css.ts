@@ -1,8 +1,16 @@
 
-import { style, styleVariants } from "@vanilla-extract/css";
+import { createVar, style, styleVariants } from "@vanilla-extract/css";
 import { tokens } from "../../theme/tokens";
 
 const { colors, radius, spacing, controlHeights, motion, typography } = tokens;
+
+const bgVar = createVar();
+const bgHoverVar = createVar();
+const bgActiveVar = createVar();
+const textVar = createVar();
+const textHoverVar = createVar();
+const textActiveVar = createVar();
+const borderVar = createVar();
 
 export const buttonBase = style({
   display: "inline-flex",
@@ -14,7 +22,7 @@ export const buttonBase = style({
   borderStyle: "solid",
   borderColor: "transparent",
   fontFamily: typography.fontFamily.ui,
-  fontWeight: typography.weight.semibold,
+  fontWeight: 900,
   fontSize: `${typography.size.sm}px`,
   lineHeight: typography.lineHeight.snug,
   cursor: "pointer",
@@ -34,66 +42,105 @@ export const buttonBase = style({
     },
     "&:disabled": {
       cursor: "not-allowed",
-      opacity: 0.5,
+      opacity: 0.55,
       boxShadow: "none",
     },
   },
 });
 
-// Variants: primary | secondary | subtle | destructive
-export const buttonVariant = styleVariants({
+// Tone sets color variables for the button; appearance consumes them.
+export const buttonTone = styleVariants({
+  purple: {
+    vars: {
+      [bgVar]: colors.button.signal.purple.bg,
+      [bgHoverVar]: colors.button.signal.purple.bgHover,
+      [bgActiveVar]: colors.button.signal.purple.bgActive,
+      [textVar]: colors.button.signal.purple.text,
+      [textHoverVar]: colors.button.signal.purple.text,
+      [textActiveVar]: colors.button.signal.purple.text,
+      [borderVar]: colors.button.signal.purple.border,
+    },
+  },
+  blue: {
+    vars: {
+      [bgVar]: colors.button.signal.blue.bg,
+      [bgHoverVar]: colors.button.signal.blue.bgHover,
+      [bgActiveVar]: colors.button.signal.blue.bgActive,
+      [textVar]: colors.button.signal.blue.text,
+      [textHoverVar]: colors.button.signal.blue.text,
+      [textActiveVar]: colors.button.signal.blue.text,
+      [borderVar]: colors.button.signal.blue.border,
+    },
+  },
+  red: {
+    vars: {
+      [bgVar]: colors.button.signal.red.bg,
+      [bgHoverVar]: colors.button.signal.red.bgHover,
+      [bgActiveVar]: colors.button.signal.red.bgActive,
+      [textVar]: colors.button.signal.red.text,
+      [textHoverVar]: colors.button.signal.red.text,
+      [textActiveVar]: colors.button.signal.red.text,
+      [borderVar]: colors.button.signal.red.border,
+    },
+  },
+  neutral: {
+    vars: {
+      [bgVar]: colors.button.signal.neutral.bg,
+      [bgHoverVar]: colors.button.signal.neutral.bgHover,
+      [bgActiveVar]: colors.button.signal.neutral.bgActive,
+      [textVar]: colors.button.signal.neutral.text, // default text on transparent
+      [textHoverVar]: colors.button.signal.neutral.hoverText ?? colors.text.inverse,
+      [textActiveVar]: colors.button.signal.neutral.hoverText ?? colors.text.inverse,
+      [borderVar]: colors.button.signal.neutral.border,
+    },
+  },
+});
+
+// Appearances: primary (filled), secondary (outline), tertiary (ghost)
+export const buttonAppearance = styleVariants({
   primary: {
-    backgroundColor: colors.button.primary.bg,
-    color: colors.button.primary.text,
+    backgroundColor: bgVar,
+    color: textVar,
     borderColor: "transparent",
     selectors: {
       "&:hover:not(:disabled)": {
-        backgroundColor: colors.button.primary.bgHover,
+        backgroundColor: bgHoverVar,
       },
       "&:active:not(:disabled)": {
-        backgroundColor: colors.button.primary.bgActive,
+        backgroundColor: bgActiveVar,
         transform: "translateY(1px)",
       },
     },
   },
   secondary: {
-    backgroundColor: colors.button.secondary.bg,
-    color: colors.button.secondary.text,
-    borderColor: colors.button.secondary.border,
+    backgroundColor: "transparent",
+    color: textVar,
+    borderColor: borderVar,
+    borderWidth: "2px",
     selectors: {
       "&:hover:not(:disabled)": {
-        backgroundColor: colors.button.secondary.bgHover,
+        backgroundColor: bgHoverVar,
+        color: textHoverVar,
       },
       "&:active:not(:disabled)": {
-        backgroundColor: colors.button.secondary.bgActive,
+        backgroundColor: bgActiveVar,
+        color: textActiveVar,
         transform: "translateY(1px)",
       },
     },
   },
-  subtle: {
-    backgroundColor: colors.button.subtle.bg,
-    color: colors.button.subtle.text,
+  tertiary: {
+    backgroundColor: "transparent",
+    color: textVar,
     borderColor: "transparent",
     selectors: {
       "&:hover:not(:disabled)": {
-        backgroundColor: colors.button.subtle.bgHover,
+        backgroundColor: bgHoverVar,
+        color: textHoverVar,
       },
       "&:active:not(:disabled)": {
-        backgroundColor: colors.button.subtle.bgActive,
-        transform: "translateY(1px)",
-      },
-    },
-  },
-  destructive: {
-    backgroundColor: colors.button.destructive.bg,
-    color: colors.button.destructive.text,
-    borderColor: "transparent",
-    selectors: {
-      "&:hover:not(:disabled)": {
-        backgroundColor: colors.button.destructive.bgHover,
-      },
-      "&:active:not(:disabled)": {
-        backgroundColor: colors.button.destructive.bgActive,
+        backgroundColor: bgActiveVar,
+        color: textActiveVar,
         transform: "translateY(1px)",
       },
     },

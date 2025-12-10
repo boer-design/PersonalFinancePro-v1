@@ -1,121 +1,141 @@
 // web/src/components/ui/theme/colors.ts
 
-// 1) Raw palette, closely mirroring your design-tokens JSON names.
-//    These values come from design-tokens.tokensv1.json (neutral / purple / blue / red).
-//    You can expand or tweak as needed.
-
-export const rawColors = {
-    // neutral
-    'neutral-0': '#ffffffff',
-    'neutral-50': '#f3f2f3ff',
-    'neutral-100': '#e7e4e7ff',
-    'neutral-200': '#cecaceff',
-    'neutral-300': '#b6afb6ff',
-    'neutral-400': '#9d959dff',
-    'neutral-500': '#857a85ff',
-    'neutral-600': '#6a626aff',
-    'neutral-800': '#353135ff',
-    'neutral-900': '#1b181bff',
-    'neutral-1000': '#131113ff',
+// Raw palette from design-tokens.tokensv1.json (alpha stripped)
+export const palette = {
+    // Neutrals
+    neutral0: "#ffffff",
+    neutral50: "#f3f2f3",
+    neutral100: "#e7e4e7",
+    neutral200: "#cecace",
+    neutral300: "#b6afb6",
+    neutral400: "#9d959d",
+    neutral500: "#857a85",
+    neutral600: "#6a626a",
+    neutral800: "#353135",
+    neutral900: "#1b181b",
+    neutral1000: "#131113",
   
-    // purple
-    'purple-50': '#f1edffff',
-    'purple-100': '#ddd5f6ff',
-    'purple-200': '#baaaeeff',
-    'purple-300': '#9880e5ff',
-    'purple-400': '#7556dcff',
-    'purple-500': '#532bd4ff',
-    'purple-600': '#4223a9ff',
-    'purple-800': '#211155ff',
-    'purple-900': '#11092aff',
-    'purple-1000': '#0c061eff',
+    // Purples (brand)
+    purple50: "#f1edff",
+    purple100: "#ddd5f6",
+    purple200: "#baaaee",
+    purple300: "#9880e5",
+    purple400: "#7556dc",
+    purple500: "#532bd4",
+    purple600: "#4223a9",
+    purple800: "#211155",
+    purple900: "#11092a",
+    purple1000: "#0c061e",
   
-    // blue
-    'blue-50': '#e8fbfdff',
-    'blue-100': '#d0f7fbff',
-    'blue-200': '#a1f0f7ff',
-    'blue-300': '#72e8f3ff',
-    'blue-400': '#43e0efff',
-    'blue-500': '#14d9ebff',
-    'blue-600': '#10adbcff',
-    'blue-700': '#0c828dff',
-    'blue-800': '#08575eff',
-    'blue-900': '#042b2fff',
-    'blue-1000': '#031e21ff',
+    // Blues (support / info)
+    blue50: "#e8fbfd",
+    blue100: "#d0f7fb",
+    blue200: "#a1f0f7",
+    blue300: "#72e8f3",
+    blue400: "#43e0ef",
+    blue500: "#14d9eb",
+    blue600: "#10adbc",
+    blue700: "#0c828d",
+    blue800: "#08575e",
+    blue900: "#042b2f",
+    blue1000: "#031e21",
   
-    // red
-    'red-50': '#fbe9e9ff',
-    'red-100': '#f7d4d4ff',
-    'red-200': '#f0a8a8ff',
-    'red-300': '#e87d7dff',
-    'red-400': '#e05252ff',
-    'red-500': '#d92626ff',
-    'red-600': '#ad1f1fff',
-    'red-700': '#821717ff',
-    'red-800': '#570f0fff',
-    'red-900': '#2b0808ff',
-    'red-1000': '#1e0505ff',
+    // Reds (danger)
+    red50: "#fbe9e9",
+    red100: "#f7d4d4",
+    red200: "#f0a8a8",
+    red300: "#e87d7d",
+    red400: "#e05252",
+    red500: "#d92626",
+    red600: "#ad1f1f",
+    red700: "#821717",
+    red800: "#570f0f",
+    red900: "#2b0808",
+    red1000: "#1e0505",
   } as const;
   
-  export type RawColorName = keyof typeof rawColors;
+  export type PaletteKey = keyof typeof palette;
   
-  // 2) Semantic aliases: what components will actually use.
-  //    This is where we decide “app background”, “card surface”, “primary button”, etc.
-  //    Based on: dark-ish UI, finance dashboard, and your palette.
-  
+  // Semantic colors used by components.
+  // We’ll expand this over time; for Button we only need a subset.
   export const semanticColors = {
-    // App backgrounds
-    appBackground: rawColors['neutral-1000'],
-    appForeground: rawColors['neutral-0'],
-  
-    surface: rawColors['neutral-900'],
-    surfaceSubtle: rawColors['neutral-800'],
-    surfaceElevated: rawColors['neutral-800'],
-    surfaceMuted: rawColors['neutral-600'],
-  
-    // Borders
-    borderSubtle: rawColors['neutral-800'],
-    borderDefault: rawColors['neutral-600'],
-    borderStrong: rawColors['neutral-400'],
-    borderFocus: rawColors['blue-500'],
-  
-    // Text
-    textPrimary: rawColors['neutral-0'],
-    textSecondary: rawColors['neutral-300'],
-    textMuted: rawColors['neutral-400'],
-    textOnAccent: rawColors['neutral-0'],
-    textOnInverted: rawColors['neutral-1000'],
-  
-    // Brand / accent
-    brandPrimary: rawColors['blue-500'],
-    brandPrimarySoft: rawColors['blue-300'],
-    brandPrimaryStrong: rawColors['blue-600'],
-  
-    brandSecondary: rawColors['purple-500'],
-    brandSecondarySoft: rawColors['purple-300'],
-    brandSecondaryStrong: rawColors['purple-600'],
-  
-    // Status
-    success: rawColors['blue-600'], // using blue as “positive” in this palette for now
-    successSoft: rawColors['blue-100'],
-    danger: rawColors['red-500'],
-    dangerSoft: rawColors['red-100'],
-    warning: rawColors['red-300'], // can introduce a dedicated yellow later
-    warningSoft: rawColors['red-50'],
-    info: rawColors['blue-400'],
-    infoSoft: rawColors['blue-100'],
-  
-    // UI controls (we’ll reuse in Button/Input/etc)
-    controlBackground: rawColors['neutral-900'],
-    controlBackgroundSubtle: rawColors['neutral-800'],
-    controlBorder: rawColors['neutral-600'],
-    controlPlaceholder: rawColors['neutral-400'],
-    controlDisabledBg: rawColors['neutral-900'],
-    controlDisabledText: rawColors['neutral-600'],
-  
-    // Overlays
-    overlay: 'rgba(0, 0, 0, 0.5)',
+    background: {
+      app: palette.neutral1000,
+      surface: palette.neutral900,
+      elevated: palette.neutral800,
+      subtle: palette.neutral800,
+
+    },
+    text: {
+      primary: palette.neutral0,
+      muted: palette.neutral300,
+      subtle: palette.neutral400,
+      inverse: palette.neutral1000,
+      disabled: palette.neutral600,
+    },
+    border: {
+      subtle: palette.neutral800,
+      strong: palette.neutral600,
+      focus: palette.blue500,
+    },
+    table: {
+      bg: palette.neutral900,
+      bgHover: palette.purple900,
+      },
+    
+    button: {
+      primary: {
+        bg: palette.neutral0,
+        bgHover: palette.neutral50,
+        bgActive: palette.neutral100,
+        text: palette.neutral1000,
+      },
+      secondary: {
+        bg: palette.neutral900,
+        bgHover: palette.neutral800,
+        bgActive: palette.neutral800,
+        text: palette.neutral0,
+        border: palette.neutral600,
+      },
+      subtle: {
+        bg: "transparent",
+        bgHover: palette.neutral900,
+        bgActive: palette.neutral800,
+        text: palette.neutral0,
+      },
+      signal: {
+        purple: {
+          bg: palette.purple500,
+          bgHover: palette.purple400,
+          bgActive: palette.purple600,
+          text: palette.neutral0,
+          border: palette.purple500,
+        },
+        blue: {
+          bg: palette.blue600,
+          bgHover: palette.blue500,
+          bgActive: palette.blue700,
+          text: palette.neutral0,
+          border: palette.blue600,
+        },
+        red: {
+        bg: palette.red500,
+        bgHover: palette.red400,
+        bgActive: palette.red600,
+        text: palette.neutral0,
+          border: palette.red500,
+        },
+        neutral: {
+          bg: palette.neutral0,
+          bgHover: palette.neutral50,
+          bgActive: palette.neutral100,
+          text: palette.neutral0,
+          hoverText: palette.neutral1000,
+          border: palette.neutral200,
+        },
+      },
+    },
   } as const;
   
-  export type SemanticColorName = keyof typeof semanticColors;
+  export type SemanticColors = typeof semanticColors;
   

@@ -46,8 +46,28 @@ export type TextStyle = {
   
   // “Semantic” typography scale the app can use.
   export const typography = {
-    fontFamily: fontFamilies,
-  
+    fontFamily: {
+        ui: '"Manrope", system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
+      },
+    
+      weight: {
+        regular: 400,
+        medium: 500,
+        semibold: 600,
+        bold: 700,
+      },
+    
+      size: {
+        xxs: 12,
+        xs: 13,
+        sm: 14,
+        md: 16,
+      },
+    
+      lineHeight: {
+        snug: 1.3,
+        normal: 1.5,
+      },
     // Headlines: dashboard titles, section titles, etc.
     heading: {
       h1: headingStyles.xl,
@@ -65,6 +85,8 @@ export type TextStyle = {
       sm: bodyStyles.xxs,
     },
   } as const;
+
+  
   
   export type Typography = typeof typography;
   

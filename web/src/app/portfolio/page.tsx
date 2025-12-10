@@ -3,13 +3,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import * as Separator from '@radix-ui/react-separator';
-import * as ScrollArea from '@radix-ui/react-scroll-area';
 import Link from 'next/link';
 
 import AppShell from '../components/AppShell';
 import { useAuth } from '../lib/auth';
 import { useApi } from '../lib/api';
 import { useAccountsQuery } from '../lib/accounts';
+import { Select, Table } from '../components/ui';
 
 type Position = {
   assetId: string;
@@ -87,22 +87,17 @@ export default function PortfolioPage() {
               View your current positions and account totals.
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <label className="text-xs text-slate-300">Account</label>
-            <select
-              className="border border-slate-700 bg-slate-900 rounded px-3 py-2 text-sm min-w-[220px]"
-              value={selectedAccountId}
-              onChange={(e) => setSelectedAccountId(e.target.value)}
-              disabled={accountsLoading || !accounts?.length}
-            >
-              {(accounts ?? []).map((acc) => (
-                <option key={acc.id} value={acc.id}>
-                  {acc.name} ({acc.currency}
-                  {acc.type ? ` • ${acc.type}` : ''})
-                </option>
-              ))}
-            </select>
-          </div>
+          <Select
+            label="Account"
+            placeholder="Select account"
+            value={selectedAccountId}
+            onValueChange={setSelectedAccountId}
+            disabled={accountsLoading || !accounts?.length}
+            options={(accounts ?? []).map((acc) => ({
+              value: acc.id,
+              label: `${acc.name} (${acc.currency}${acc.type ? ` • ${acc.type}` : ''})`,
+            }))}
+          />
         </div>
 
         <div className="grid gap-5 lg:grid-cols-[260px_1fr]">
@@ -173,71 +168,60 @@ export default function PortfolioPage() {
             ) : positions.length === 0 ? (
               <div className="p-5 text-sm text-slate-300">No positions yet.</div>
             ) : (
-              <ScrollArea.Root className="max-h-[600px]">
-                <ScrollArea.Viewport className="p-5">
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full text-sm">
-                      <thead className="bg-slate-900/80 border-b border-slate-700">
-                        <tr>
-                          <th className="px-3 py-2 text-left font-medium">Symbol</th>
-                          <th className="px-3 py-2 text-left font-medium">Name</th>
-                          <th className="px-3 py-2 text-right font-medium">Quantity</th>
-                          <th className="px-3 py-2 text-right font-medium">Avg buy</th>
-                          <th className="px-3 py-2 text-right font-medium">
-                            Current price
-                          </th>
-                          <th className="px-3 py-2 text-right font-medium">
-                            Market value
-                          </th>
-                          <th className="px-3 py-2 text-right font-medium">
-                            Unrealized P/L
-                          </th>
-                          <th className="px-3 py-2 text-right font-medium">
-                            Realized P/L
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {positions.map((p) => (
-                          <tr
-                            key={p.assetId}
-                            className="border-t border-slate-700/60 hover:bg-slate-900/60"
-                          >
-                            <td className="px-3 py-2 font-semibold">{p.symbol}</td>
-                            <td className="px-3 py-2 text-slate-200">{p.name}</td>
-                            <td className="px-3 py-2 text-right">
-                              {p.quantity.toLocaleString()}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {p.avgBuyPrice.toFixed(2)}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {p.currentPrice !== null ? p.currentPrice.toFixed(2) : '—'}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {p.marketValue !== null ? p.marketValue.toFixed(2) : '—'}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {p.unrealizedPnl !== null
-                                ? p.unrealizedPnl.toFixed(2)
-                                : '—'}
-                            </td>
-                            <td className="px-3 py-2 text-right">
-                              {p.realizedPnl.toFixed(2)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </ScrollArea.Viewport>
-                <ScrollArea.Scrollbar
-                  orientation="vertical"
-                  className="ScrollAreaScrollbar"
-                >
-                  <ScrollArea.Thumb className="ScrollAreaThumb" />
-                </ScrollArea.Scrollbar>
-              </ScrollArea.Root>
+              <div className="p-5">
+                <Table>
+                  <Table.Head>
+                    <Table.HeadRow>
+                      <Table.HeaderCell>
+                        <Table.ColumnTitle>Symbol</Table.ColumnTitle>
+                      </Table.HeaderCell>
+                      <Table.HeaderCell>
+                        <Table.ColumnTitle>Name</Table.ColumnTitle>
+                      </Table.HeaderCell>
+                      <Table.HeaderCell align="right">
+                        <Table.ColumnTitle align="right">Quantity</Table.ColumnTitle>
+                      </Table.HeaderCell>
+                      <Table.HeaderCell align="right">
+                        <Table.ColumnTitle align="right">Avg buy</Table.ColumnTitle>
+                      </Table.HeaderCell>
+                      <Table.HeaderCell align="right">
+                        <Table.ColumnTitle align="right">Current price</Table.ColumnTitle>
+                      </Table.HeaderCell>
+                      <Table.HeaderCell align="right">
+                        <Table.ColumnTitle align="right">Market value</Table.ColumnTitle>
+                      </Table.HeaderCell>
+                      <Table.HeaderCell align="right">
+                        <Table.ColumnTitle align="right">Unrealized P/L</Table.ColumnTitle>
+                      </Table.HeaderCell>
+                      <Table.HeaderCell align="right">
+                        <Table.ColumnTitle align="right">Realized P/L</Table.ColumnTitle>
+                      </Table.HeaderCell>
+                    </Table.HeadRow>
+                  </Table.Head>
+                  <Table.Body>
+                    {positions.map((p) => (
+                      <Table.Row key={p.assetId}>
+                        <Table.Cell className="font-semibold">{p.symbol}</Table.Cell>
+                        <Table.Cell className="text-slate-200">{p.name}</Table.Cell>
+                        <Table.Cell align="right">
+                          {p.quantity.toLocaleString()}
+                        </Table.Cell>
+                        <Table.Cell align="right">{p.avgBuyPrice.toFixed(2)}</Table.Cell>
+                        <Table.Cell align="right">
+                          {p.currentPrice !== null ? p.currentPrice.toFixed(2) : '—'}
+                        </Table.Cell>
+                        <Table.Cell align="right">
+                          {p.marketValue !== null ? p.marketValue.toFixed(2) : '—'}
+                        </Table.Cell>
+                        <Table.Cell align="right">
+                          {p.unrealizedPnl !== null ? p.unrealizedPnl.toFixed(2) : '—'}
+                        </Table.Cell>
+                        <Table.Cell align="right">{p.realizedPnl.toFixed(2)}</Table.Cell>
+                      </Table.Row>
+                    ))}
+                  </Table.Body>
+                </Table>
+              </div>
             )}
           </section>
         </div>

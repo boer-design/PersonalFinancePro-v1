@@ -9,5 +9,5 @@ export const radius = {
     full: 9999,
   } as const;
   
-  export type RadiusScale = keyof typeof radius;
+  export type RadiusKey = keyof typeof radius;
   
