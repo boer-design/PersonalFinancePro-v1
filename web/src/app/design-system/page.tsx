@@ -2,8 +2,18 @@
 "use client";
 
 import { Button } from "../components/ui";
+import type {
+  ButtonAppearance,
+  ButtonTone,
+  ButtonSize,
+} from "../components/ui/form/button/Button";
+import { Select } from "../components/ui";
 
 export default function DesignSystemPage() {
+  const tones: ButtonTone[] = ["purple", "blue", "red", "neutral"];
+  const appearances: ButtonAppearance[] = ["primary", "secondary", "tertiary"];
+  const sizes: ButtonSize[] = ["sm", "md", "lg"];
+
   return (
     <main
       style={{
@@ -18,36 +28,141 @@ export default function DesignSystemPage() {
       <h1 style={{ fontSize: 32, marginBottom: 24 }}>Design System</h1>
 
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 20, marginBottom: 12 }}>Button – Variants</h2>
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <Button leadingIconName="check">Primary</Button>
-          <Button variant="secondary" leadingIconName="alert">
-            Secondary
-          </Button>
-          <Button variant="subtle" trailingIconName="arrow">
-            Subtle
-          </Button>
-          <Button variant="destructive" leadingIconName="close">
-            Destructive
-          </Button>
-          <Button disabled leadingIconName="alert">
-            Disabled
-          </Button>
+        <h2 style={{ fontSize: 20, marginBottom: 12 }}>
+          Button – Signals & Appearances
+        </h2>
+        <div
+          style={{
+            display: "grid",
+            gap: 16,
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+          }}
+        >
+          {tones.map((tone) =>
+            appearances.map((appearance) => (
+              <div
+                key={`${tone}-${appearance}`}
+                style={{
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  borderRadius: 12,
+                  padding: 12,
+                  background: "#1b181b",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: "#cbd5e1",
+                    marginBottom: 8,
+                    display: "flex",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <span style={{ textTransform: "capitalize" }}>{appearance}</span>
+                  <span style={{ textTransform: "capitalize" }}>{tone}</span>
+                </div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <Button
+                    tone={tone}
+                    appearance={appearance}
+                    leadingIconName="check"
+                  >
+                    Submit
+                  </Button>
+                  <Button
+                    tone={tone}
+                    appearance={appearance}
+                    trailingIconName="arrow"
+                  >
+                    Next
+                  </Button>
+                  <Button tone={tone} appearance={appearance} disabled>
+                    Disabled
+                  </Button>
+                </div>
+              </div>
+            )),
+          )}
+        </div>
+      </section>
+
+      <section style={{ marginBottom: 32 }}>
+        <h2 style={{ fontSize: 20, marginBottom: 12 }}>Select – Signals</h2>
+        <div
+          style={{
+            display: "grid",
+            gap: 16,
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+          }}
+        >
+          {tones.map((tone) => (
+            <div
+              key={`select-${tone}`}
+              style={{
+                border: "1px solid rgba(255,255,255,0.06)",
+                borderRadius: 12,
+                padding: 12,
+                background: "#1b181b",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 12,
+                  color: "#cbd5e1",
+                  marginBottom: 8,
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}
+              >
+                <span style={{ textTransform: "capitalize" }}>{tone}</span>
+                <span style={{ textTransform: "capitalize" }}>Solid</span>
+              </div>
+              <Select
+                tone={tone}
+                appearance="solid"
+                placeholder="Select Account"
+                options={[
+                  { label: "Select Account", value: "placeholder" },
+                  { label: "LYNX - Brokerage", value: "lynx" },
+                  { label: "DEGIRO - Brokerage", value: "degiro" },
+                  { label: "LYNX", value: "lynx2" },
+                  { label: "DEGIRO", value: "degiro2" },
+                ]}
+              />
+              <div style={{ marginTop: 12 }}>
+                <Select
+                  tone={tone}
+                  appearance="outline"
+                  placeholder="Outline"
+                  options={[
+                    { label: "Primary", value: "primary" },
+                    { label: "Default", value: "default" },
+                    { label: "Hover", value: "hover" },
+                    { label: "Active", value: "active" },
+                  ]}
+                />
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
       <section>
-        <h2 style={{ fontSize: 20, marginBottom: 12 }}>Button – Sizes</h2>
+        <h2 style={{ fontSize: 20, marginBottom: 12 }}>
+          Button – Sizes (tone: purple, appearance: primary)
+        </h2>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <Button size="sm" leadingIconName="check">
-            Small
-          </Button>
-          <Button size="md" trailingIconName="arrow">
-            Medium
-          </Button>
-          <Button size="lg" leadingIconName="alert">
-            Large
-          </Button>
+          {sizes.map((size) => (
+            <Button
+              key={size}
+              size={size}
+              tone="purple"
+              appearance="primary"
+              leadingIconName="check"
+            >
+              {size.toUpperCase()}
+            </Button>
+          ))}
         </div>
       </section>
     </main>
