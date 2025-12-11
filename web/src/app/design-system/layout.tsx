@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   ArrowTrendingUpIcon,
   BeakerIcon,
+  BookOpenIcon,
   ChartPieIcon,
   CursorArrowRippleIcon,
   ChatBubbleLeftRightIcon,
@@ -94,6 +95,14 @@ export default function DesignSystemLayout({
         id: "foundations",
         label: "Foundations",
         items: [
+          {
+            id: "style-guide",
+            label: "Style Guide",
+            description: "Brand story + principles",
+            icon: <BookOpenIcon width={20} height={20} />,
+            active: pathname === "/design-system/style-guide",
+            onClick: () => router.push("/design-system/style-guide"),
+          },
           {
             id: "tokens",
             label: "Tokens (coming soon)",
