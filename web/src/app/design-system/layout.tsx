@@ -2,12 +2,12 @@
 
 import * as React from "react";
 import { useMemo } from "react";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
   ArrowTrendingUpIcon,
   BeakerIcon,
   BookOpenIcon,
-  ChartPieIcon,
   CursorArrowRippleIcon,
   ChatBubbleLeftRightIcon,
   PencilSquareIcon,
@@ -17,6 +17,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { SideMenu } from "../components/ui";
 import type { SideMenuSection } from "../components/ui/navigation/side-menu/SideMenu";
+import * as styles from "./layout.css";
 
 export default function DesignSystemLayout({
   children,
@@ -28,6 +29,84 @@ export default function DesignSystemLayout({
 
   const sections: SideMenuSection[] = useMemo(
     () => [
+      {
+        id: "foundations",
+        label: "Foundations",
+        items: [
+          {
+            id: "style-guide",
+            label: "Style Guide",
+            description: "Brand story + principles",
+            icon: <BookOpenIcon width={20} height={20} />,
+            active: pathname === "/design-system/style-guide",
+            onClick: () => router.push("/design-system/style-guide"),
+          },
+          {
+            id: "colors",
+            label: "Colors",
+            description: "Palette + semantic",
+            icon: <span aria-hidden="true">🎨</span>,
+            active: pathname === "/design-system/colors",
+            onClick: () => router.push("/design-system/colors"),
+          },
+          {
+            id: "typography",
+            label: "Typography",
+            description: "Headings + body scale",
+            icon: <span aria-hidden="true">🔤</span>,
+            active: pathname === "/design-system/typography",
+            onClick: () => router.push("/design-system/typography"),
+          },
+          {
+            id: "radii",
+            label: "Radii",
+            description: "Corner rounding scale",
+            icon: <span aria-hidden="true">⬒</span>,
+            active: pathname === "/design-system/radii",
+            onClick: () => router.push("/design-system/radii"),
+          },
+          {
+            id: "borders",
+            label: "Borders",
+            description: "To be defined",
+            icon: <ArrowTrendingUpIcon width={20} height={20} />,
+            active: pathname === "/design-system/borders",
+            onClick: () => router.push("/design-system/borders"),
+          },
+          {
+            id: "shadows",
+            label: "Shadows",
+            description: "Elevation set",
+            icon: <span aria-hidden="true">🌘</span>,
+            active: pathname === "/design-system/shadows",
+            onClick: () => router.push("/design-system/shadows"),
+          },
+          {
+            id: "spacing",
+            label: "Spacing",
+            description: "Base spacing + controls",
+            icon: <span aria-hidden="true">↔️</span>,
+            active: pathname === "/design-system/spacing",
+            onClick: () => router.push("/design-system/spacing"),
+          },
+          {
+            id: "motion",
+            label: "Motion",
+            description: "Duration + easing",
+            icon: <span aria-hidden="true">⏱️</span>,
+            active: pathname === "/design-system/motion",
+            onClick: () => router.push("/design-system/motion"),
+          },
+          {
+            id: "iconography",
+            label: "Iconography",
+            description: "To be defined",
+            icon: <span aria-hidden="true">🔲</span>,
+            active: pathname === "/design-system/iconography",
+            onClick: () => router.push("/design-system/iconography"),
+          },
+        ],
+      },
       {
         id: "components",
         label: "Components",
@@ -91,71 +170,26 @@ export default function DesignSystemLayout({
           },
         ],
       },
-      {
-        id: "foundations",
-        label: "Foundations",
-        items: [
-          {
-            id: "style-guide",
-            label: "Style Guide",
-            description: "Brand story + principles",
-            icon: <BookOpenIcon width={20} height={20} />,
-            active: pathname === "/design-system/style-guide",
-            onClick: () => router.push("/design-system/style-guide"),
-          },
-          {
-            id: "tokens",
-            label: "Tokens (coming soon)",
-            description: "Colors, spacing, motion",
-            icon: <ChartPieIcon width={20} height={20} />,
-            disabled: true,
-          },
-          {
-            id: "patterns",
-            label: "Patterns (coming soon)",
-            description: "Form + nav patterns",
-            icon: <ArrowTrendingUpIcon width={20} height={20} />,
-            disabled: true,
-          },
-        ],
-      },
     ],
     [pathname, router]
   );
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#131113",
-        color: "#fff",
-        fontFamily:
-          '"Manrope", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          margin: 0,
-          padding: "32px 24px",
-          display: "grid",
-          gap: 24,
-          gridTemplateColumns: "minmax(280px, 320px) 1fr",
-        }}
-      >
+    <div className={styles.root}>
+      <div className={styles.shell}>
         <div>
-          <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 28, fontWeight: 800 }}>Design System</div>
-            <div
-              style={{
-                color: "#cbd5e1",
-                marginTop: 4,
-                fontSize: 14,
-                letterSpacing: 0.2,
-              }}
-            >
-              Components, tokens, and examples.
+          <div className={styles.titleBlock}>
+            <div className={styles.brandRow}>
+              <div className={styles.brandLogo}>
+                <Image src="/navaro-logo.svg" alt="Navaro logo" width={40} height={40} />
+              </div>
+              <div className={styles.brandText}>
+                <div className={styles.brandName}>Navaro</div>
+                <div className={styles.brandTagline}>Personal finance platform</div>
+              </div>
             </div>
+            <div className={styles.title}>Design System</div>
+            <div className={styles.subtitle}>Components, tokens, and examples.</div>
           </div>
           <SideMenu
             title="Components"
@@ -170,17 +204,7 @@ export default function DesignSystemLayout({
           />
         </div>
 
-        <div
-          style={{
-            background: "rgba(255,255,255,0.02)",
-            border: "1px solid rgba(255,255,255,0.05)",
-            borderRadius: 16,
-            padding: 20,
-            minHeight: "70vh",
-          }}
-        >
-          {children}
-        </div>
+        <div className={styles.contentCard}>{children}</div>
       </div>
     </div>
   );

@@ -1,11 +1,9 @@
 "use client";
 
-const surfaceStyle = {
-  border: "1px solid rgba(255,255,255,0.06)",
-  borderRadius: 16,
-  padding: 18,
-  background: "#1b181b",
-} as const;
+import Image from "next/image";
+import { classNames } from "../../components/ui/utils/classNames";
+import * as foundation from "../foundationCommon.css";
+import * as styles from "./styleGuide.css";
 
 export default function StyleGuidePage() {
   const principles = [
@@ -30,62 +28,68 @@ export default function StyleGuidePage() {
   ];
 
   return (
-    <div style={{ display: "grid", gap: 20 }}>
-      <header>
-        <h1 style={{ fontSize: 24, marginBottom: 8 }}>Style Guide</h1>
-        <p style={{ color: "#cbd5e1", fontSize: 14 }}>
+    <div className={foundation.page}>
+      <header className={foundation.header}>
+        <h1 className={foundation.title}>Style Guide</h1>
+        <p className={foundation.subtitle}>
           Brand story and experience principles to guide the system.
         </p>
       </header>
 
-      <section style={surfaceStyle}>
-        <h2 style={{ fontSize: 18, marginBottom: 8 }}>Brand Story</h2>
-        <p style={{ color: "#e2e8f0", lineHeight: 1.6 }}>
-          PersonalFinancePro is a modern personal finance platform built to give
-          people complete control and clarity over their financial lives. From
+      <section className={foundation.surface}>
+        <h2 className={foundation.sectionTitle}>Brand Story</h2>
+        <p className={foundation.textMuted}>
+          Navaro is a modern personal finance platform built to give people
+          complete control and clarity over their financial lives. From
           day-to-day income and expenses to long-term investments and net-worth
           tracking, the product brings everything together into one coherent,
           trustworthy system.
         </p>
-        <p style={{ color: "#e2e8f0", marginTop: 12, lineHeight: 1.6 }}>
+        <p className={foundation.textMuted}>
           Our mission is to help users move from guessing to knowing — with
           tools that make financial awareness effortless, accurate, and
           empowering.
         </p>
       </section>
 
-      <section style={{ display: "grid", gap: 12 }}>
-        <h2 style={{ fontSize: 18 }}>Experience Principles</h2>
-        <div
-          style={{
-            display: "grid",
-            gap: 12,
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          }}
-        >
+      <section className={foundation.surface}>
+        <h2 className={foundation.sectionTitle}>Logo</h2>
+        <div className={styles.logoRow}>
+          <div className={styles.logoBox}>
+            <Image src="/navaro-logo.svg" alt="Navaro logo" width={56} height={56} />
+          </div>
+          <div>
+            <div className={styles.logoLabel}>Navaro logo (SVG)</div>
+            <div className={styles.logoMeta}>Path: /public/navaro-logo.svg</div>
+          </div>
+        </div>
+        <p className={foundation.textMuted}>
+          Use the provided SVG for brand placement in navigation and system pages.
+        </p>
+      </section>
+
+      <section className={foundation.section}>
+        <h2 className={foundation.sectionTitle}>Experience Principles</h2>
+        <div className={styles.principleGrid}>
           {principles.map((principle) => (
-            <div key={principle.title} style={surfaceStyle}>
-              <div style={{ fontWeight: 700, marginBottom: 6 }}>
-                {principle.title}
-              </div>
-              <div style={{ color: "#cbd5e1", fontSize: 14 }}>
-                {principle.detail}
-              </div>
+            <div key={principle.title} className={classNames(foundation.surface, styles.card)}>
+              <div className={styles.tokenName}>{principle.title}</div>
+              <div className={styles.tokenMeta}>{principle.detail}</div>
             </div>
           ))}
         </div>
       </section>
 
-      <section style={surfaceStyle}>
-        <h2 style={{ fontSize: 18, marginBottom: 10 }}>Key Themes</h2>
-        <ul style={{ color: "#cbd5e1", lineHeight: 1.6, paddingLeft: 18 }}>
+      <section className={foundation.surface}>
+        <h2 className={foundation.sectionTitle}>Key Themes</h2>
+        <ul className={styles.list}>
           {themes.map((theme) => (
-            <li key={theme} style={{ marginBottom: 6 }}>
+            <li key={theme} className={styles.listItem}>
               {theme}
             </li>
           ))}
         </ul>
-        <p style={{ color: "#e2e8f0", marginTop: 6 }}>
+        <p className={foundation.textMuted}>
           PersonalFinancePro supports users in building confidence, understanding
           patterns, and making better decisions — whether they are tracking
           spending habits, organizing accounts, or managing investment
